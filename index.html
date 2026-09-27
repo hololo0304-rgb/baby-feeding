@@ -136,7 +136,7 @@
       border-color: var(--primary-pink);
     }
 
-    /* 奶量按鈕網格 */
+    /* 4 個大格子奶量按鈕網格 */
     .amount-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -145,11 +145,11 @@
     }
 
     .amount-btn {
-      height: 42px;
-      border: 1.5px solid var(--border-color);
+      height: 48px;
+      border: 2px solid var(--border-color);
       background: #faf9f6;
-      border-radius: 10px;
-      font-size: 0.95rem;
+      border-radius: 12px;
+      font-size: 1rem;
       font-weight: bold;
       color: #4a4a4a;
       cursor: pointer;
@@ -277,7 +277,7 @@
       </div>
     </div>
 
-    <!-- 快捷選擇奶量區 -->
+    <!-- 4 個主要奶量按鈕 (60, 90, 120, 150) -->
     <div class="form-group" id="bottleInputGroup">
       <label>🥛 準備/泡奶量 (ml)</label>
       <div class="amount-grid">
@@ -285,11 +285,8 @@
         <button type="button" class="amount-btn" onclick="setAmount(90, this)">90</button>
         <button type="button" class="amount-btn" onclick="setAmount(120, this)">120</button>
         <button type="button" class="amount-btn" onclick="setAmount(150, this)">150</button>
-        <button type="button" class="amount-btn" onclick="setAmount(180, this)">180</button>
-        <button type="button" class="amount-btn" onclick="setAmount(210, this)">210</button>
-        <button type="button" class="amount-btn" onclick="setAmount(240, this)">240</button>
       </div>
-      <input type="number" id="totalAmount" placeholder="或手動輸入奶量 (ml)" inputmode="numeric">
+      <input type="number" id="totalAmount" placeholder="或輸入其他奶量 (ml)" inputmode="numeric">
     </div>
 
     <button type="button" class="btn-submit" onclick="saveRecord()">✨ 紀錄這餐</button>
@@ -333,7 +330,7 @@
       document.getElementById('bottleInputGroup').style.display = (type === '親餵') ? 'none' : 'block';
     }
 
-    // 點選快捷奶量按鈕
+    // 點選奶量按鈕
     function setAmount(val, btn) {
       document.getElementById('totalAmount').value = val;
       document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
@@ -362,16 +359,14 @@
     // 自動抓取前一次泡奶量作為預設值
     function autoSetDefaultAmount() {
       const inputEl = document.getElementById('totalAmount');
-      // 如果已經手動選過或填過，就不覆蓋
-      if (inputEl.value) return;
+      if (inputEl.value) return; // 如果已經選過或填過就不覆蓋
 
-      // 搜尋最新一筆有泡奶量 (totalAmount > 0) 的紀錄
       const lastBottleRecord = globalRecords.find(r => r.totalAmount > 0);
       if (lastBottleRecord) {
         const lastVal = lastBottleRecord.totalAmount;
         inputEl.value = lastVal;
 
-        // 如果數值剛好符合快捷按鈕，自動高亮該按鈕
+        // 若前一次奶量剛好符合 60, 90, 120, 150，自動高亮該按鈕
         document.querySelectorAll('.amount-btn').forEach(b => {
           if (parseInt(b.innerText) === lastVal) {
             b.classList.add('active');
