@@ -53,7 +53,6 @@
       margin-bottom: 14px;
     }
 
-    /* 頂部即時摘要區塊 */
     .summary-card {
       background: linear-gradient(135deg, #ffe5d9 0%, #fff1e6 100%);
       border: none;
@@ -76,7 +75,7 @@
     }
 
     .form-group {
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
     .form-group label {
@@ -91,7 +90,7 @@
       gap: 8px;
     }
 
-    input[type="datetime-local"], input[type="number"], select {
+    input[type="datetime-local"], input[type="number"] {
       width: 100%;
       height: 46px;
       border: 2px solid var(--border-color);
@@ -137,6 +136,31 @@
       border-color: var(--primary-pink);
     }
 
+    /* 奶量按鈕網格 */
+    .amount-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .amount-btn {
+      height: 42px;
+      border: 1.5px solid var(--border-color);
+      background: #faf9f6;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #4a4a4a;
+      cursor: pointer;
+    }
+
+    .amount-btn.active {
+      background-color: #e3f2fd;
+      color: #0d47a1;
+      border-color: #90caf9;
+    }
+
     .btn-submit {
       width: 100%;
       height: 50px;
@@ -151,7 +175,6 @@
       margin-top: 6px;
     }
 
-    /* 歷史紀錄卡片 */
     .record-item {
       display: flex;
       justify-content: space-between;
@@ -220,7 +243,7 @@
 <body>
 
   <header>
-    <h1>🍼 寶寶餵奶紀錄 (雙機同步)</h1>
+    <h1>🍼 寶寶餵奶雲端紀錄</h1>
   </header>
 
   <!-- 上一次餵奶資訊卡片 -->
@@ -254,9 +277,19 @@
       </div>
     </div>
 
+    <!-- 快捷選擇奶量區 -->
     <div class="form-group" id="bottleInputGroup">
-      <label for="totalAmount">🥛 準備/泡奶量 (ml)</label>
-      <input type="number" id="totalAmount" placeholder="例如：150" inputmode="numeric">
+      <label>🥛 準備/泡奶量 (ml)</label>
+      <div class="amount-grid">
+        <button type="button" class="amount-btn" onclick="setAmount(60, this)">60</button>
+        <button type="button" class="amount-btn" onclick="setAmount(90, this)">90</button>
+        <button type="button" class="amount-btn" onclick="setAmount(120, this)">120</button>
+        <button type="button" class="amount-btn" onclick="setAmount(150, this)">150</button>
+        <button type="button" class="amount-btn" onclick="setAmount(180, this)">180</button>
+        <button type="button" class="amount-btn" onclick="setAmount(210, this)">210</button>
+        <button type="button" class="amount-btn" onclick="setAmount(240, this)">240</button>
+      </div>
+      <input type="number" id="totalAmount" placeholder="或手動輸入奶量 (ml)" inputmode="numeric">
     </div>
 
     <button type="button" class="btn-submit" onclick="saveRecord()">✨ 紀錄這餐</button>
@@ -283,7 +316,6 @@
     window.onload = function() {
       setNowTime();
       fetchRecords();
-      // 每 30 秒自動向雲端同步一次資料，且每分鐘更新時間計時
       setInterval(fetchRecords, 30000);
       setInterval(updateHeaderSummary, 60000);
     };
@@ -301,6 +333,13 @@
       document.getElementById('bottleInputGroup').style.display = (type === '親餵') ? 'none' : 'block';
     }
 
+    // 點選快捷奶量按鈕
+    function setAmount(val, btn) {
+      document.getElementById('totalAmount').value = val;
+      document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+    }
+
     // 從雲端抓取紀錄
     function fetchRecords() {
       document.getElementById('sync-status').innerText = '🔄 雲端同步中...';
@@ -311,12 +350,34 @@
             globalRecords = data.records;
             renderList();
             updateHeaderSummary();
+            autoSetDefaultAmount(); // 自動帶入前一次奶量預設值
             document.getElementById('sync-status').innerText = '✅ 已是最新雲端資料';
           }
         })
         .catch(err => {
-          document.getElementById('sync-status').innerText = '⚠️ 同步失敗，請檢查網路';
+          document.getElementById('sync-status').innerText = '⚠️ 同步失敗，請檢查權限與網址';
         });
+    }
+
+    // 自動抓取前一次泡奶量作為預設值
+    function autoSetDefaultAmount() {
+      const inputEl = document.getElementById('totalAmount');
+      // 如果已經手動選過或填過，就不覆蓋
+      if (inputEl.value) return;
+
+      // 搜尋最新一筆有泡奶量 (totalAmount > 0) 的紀錄
+      const lastBottleRecord = globalRecords.find(r => r.totalAmount > 0);
+      if (lastBottleRecord) {
+        const lastVal = lastBottleRecord.totalAmount;
+        inputEl.value = lastVal;
+
+        // 如果數值剛好符合快捷按鈕，自動高亮該按鈕
+        document.querySelectorAll('.amount-btn').forEach(b => {
+          if (parseInt(b.innerText) === lastVal) {
+            b.classList.add('active');
+          }
+        });
+      }
     }
 
     // 更新頂部「距離多久」與「上一餐喝多少」
@@ -327,7 +388,7 @@
         return;
       }
 
-      const lastRecord = globalRecords[0]; // 最新一筆
+      const lastRecord = globalRecords[0];
       const lastTime = new Date(lastRecord.timestamp);
       const now = new Date();
       const diffMs = now - lastTime;
@@ -358,7 +419,7 @@
       }
 
       if (currentType !== '親餵' && totalAmount <= 0) {
-        alert('請輸入準備/泡奶量');
+        alert('請選擇或輸入準備/泡奶量');
         return;
       }
 
@@ -379,7 +440,6 @@
       })
       .then(res => res.json())
       .then(data => {
-        document.getElementById('totalAmount').value = '';
         setNowTime();
         fetchRecords();
       });
