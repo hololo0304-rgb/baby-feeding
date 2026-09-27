@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🍼 寶寶餵奶紀錄小工具</title>
+  <style>
+    :root {
+      --primary-color: #ff8fa3;
+      --primary-hover: #ff758f;
+      --bg-color: #fff5f5;
+      --card-bg: #ffffff;
+      --text-main: #4a4a4a;
+      --text-muted: #8c8c8c;
+      --accent-color: #70d6ff;
+      --success-color: #52b788;
+      --danger-color: #e63946;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 16px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      padding: 12px 0;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      color: #d63384;
+      margin-bottom: 4px;
+    }
+
+    /* 每日統計卡片 */
+    .summary-card {
+      background: linear-gradient(135deg, #ffccd5, #ffb3c1);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(255, 143, 163, 0.2);
+    }
+
+    .stat-box h3 {
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-bottom: 4px;
+    }
+
+    .stat-box .number {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #a4133c;
+    }
+
+    /* 輸入表單卡片 */
+    .form-card {
+      background-color: var(--card-bg);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #555;
+    }
+
+    .time-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="datetime-local"], input[type="number"], select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary-color);
+    }
+
+    .quick-time-btn {
+      background-color: #e8f4f8;
+      color: #0077b6;
+      border: none;
+      padding: 0 16px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .calc-preview {
+      background-color: #f8f9fa;
+      border-left: 4px solid var(--primary-color);
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      color: #333;
+      margin-top: 8px;
+    }
+
+    .calc-preview span {
+      font-weight: bold;
+      color: #d63384;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(255, 143, 163, 0.4);
+      transition: 0.2s;
+    }
+
+    .submit-btn:active {
+      transform: scale(0.98);
+      background-color: var(--primary-hover);
+    }
+
+    /* 歷史紀錄卡片 */
+    .history-section h2 {
+      font-size: 1.2rem;
+      margin-bottom: 12px;
+      color: #444;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .history-card {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 5px solid var(--primary-color);
+    }
+
+    .card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .card-time {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .card-type {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .card-amount {
+      text-align: right;
+    }
+
+    .actual-ml {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #d63384;
+    }
+
+    .detail-ml {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 1.2rem;
+      padding: 4px 8px;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+
+    .delete-btn:hover {
+      color: var(--danger-color);
+    }
+
+    .empty-msg {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 24px 0;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🍼 寶寶餵奶紀錄</h1>
+  </header>
+
+  <!-- 今日統計數據 -->
+  <div class="summary-card">
+    <div class="stat-box">
+      <h3>今日餵奶次數</h3>
+      <div id="stat-count" class="number">0 次</div>
+    </div>
+    <div class="stat-box">
+      <h3>今日實際喝奶量</h3>
+      <div id="stat-total-ml" class="number">0 ml</div>
+    </div>
+  </div>
+
+  <!-- 新增紀錄表單 -->
+  <div class="form-card">
+    <form id="feeding-form">
+      
+      <!-- 時間選擇 -->
+      <div class="form-group">
+        <label for="feed-time">⏰ 餵奶時間</label>
+        <div class="time-btn-group">
+          <input type="datetime-local" id="feed-time" required>
+          <button type="button" class="quick-time-btn" onclick="setCurrentTime()">現在</button>
+        </div>
+      </div>
+
+      <!-- 餵奶方式 -->
+      <div class="form-group">
+        <label for="feed-type">🍼 餵奶方式</label>
+        <select id="feed-type">
+          <option value="瓶餵 (配方奶)">🍼 瓶餵 (配方奶)</option>
+          <option value="瓶餵 (母奶)">🍼 瓶餵 (母奶)</option>
+          <option value="親餵">🤱 親餵</option>
+        </select>
+      </div>
+
+      <!-- 奶量輸入 (配方/母奶瓶餵適用) -->
+      <div id="bottle-inputs">
+        <div class="form-group">
+          <label for="total-ml">🥛 預備/泡奶總量 (ml)</label>
+          <input type="number" id="total-ml" placeholder="例如：150" min="0" step="5" oninput="calculateActual()">
+        </div>
+
+        <div class="form-group">
+          <label for="leftover-ml">🥣 剩餘奶量 (ml)</label>
+          <input type="number" id="leftover-ml" placeholder="未剩餘留空或填 0" min="0" step="5" value="0" oninput="calculateActual()">
+        </div>
+
+        <!-- 即時計算顯示 -->
+        <div class="calc-preview">
+          實際喝奶量：<span id="preview-actual">0</span> ml
+        </div>
+      </div>
+
+      <br>
+      <button type="submit" class="submit-btn">✨ 儲存餵奶紀錄</button>
+    </form>
+  </div>
+
+  <!-- 歷史紀錄列表 -->
+  <div class="history-section">
+    <h2>
+      📜 歷史紀錄
+      <button onclick="clearAllData()" style="font-size:0.8rem; color:#888; border:none; background:none; cursor:pointer;">清空紀錄</button>
+    </h2>
+    <div id="history-list" class="history-list"></div>
+  </div>
+
+  <script>
+    const FORM = document.getElementById('feeding-form');
+    const FEED_TIME = document.getElementById('feed-time');
+    const FEED_TYPE = document.getElementById('feed-type');
+    const TOTAL_ML = document.getElementById('total-ml');
+    const LEFTOVER_ML = document.getElementById('leftover-ml');
+    const PREVIEW_ACTUAL = document.getElementById('preview-actual');
+    const HISTORY_LIST = document.getElementById('history-list');
+
+    // 網頁開啟時初始化
+    window.onload = function() {
+      setCurrentTime();
+      loadHistory();
+    };
+
+    // 抓取目前時間設定到 input 中
+    function setCurrentTime() {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      FEED_TIME.value = now.toISOString().slice(0, 16);
+    }
+
+    // 自動計算實際喝奶量
+    function calculateActual() {
+      const total = parseFloat(TOTAL_ML.value) || 0;
+      const leftover = parseFloat(LEFTOVER_ML.value) || 0;
+      const actual = Math.max(0, total - leftover);
+      PREVIEW_ACTUAL.innerText = actual;
+      return actual;
+    }
+
+    // 提交儲存資料
+    FORM.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const timeVal = FEED_TIME.value;
+      const typeVal = FEED_TYPE.value;
+      const totalVal = parseFloat(TOTAL_ML.value) || 0;
+      const leftoverVal = parseFloat(LEFTOVER_ML.value) || 0;
+      const actualVal = calculateActual();
+
+      const record = {
+        id: Date.now(),
+        timestamp: timeVal,
+        type: typeVal,
+        total: totalVal,
+        leftover: leftoverVal,
+        actual: actualVal
+      };
+
+      saveRecord(record);
+      
+      // 重置欄位與更新時間
+      TOTAL_ML.value = '';
+      LEFTOVER_ML.value = '0';
+      calculateActual();
+      setCurrentTime();
+      
+      loadHistory();
+    });
+
+    // 儲存至 LocalStorage
+    function saveRecord(record) {
+      let records = JSON.parse(localStorage.getItem('baby_feeding_logs')) || [];
+      records.unshift(record); // 最新紀錄排在最前面
+      localStorage.setItem('baby_feeding_logs', JSON.stringify(records));
+    }
+
+    // 讀取並渲染歷史紀錄與統計
+    function loadHistory() {
+      let records = JSON.parse(localStorage.getItem('baby_feeding_logs')) || [];
+      HISTORY_LIST.innerHTML = '';
+
+      if (records.length === 0) {
+        HISTORY_LIST.innerHTML = '<div class="empty-msg">目前還沒有紀錄，點擊上方按鈕開始新增吧！</div>';
+        updateStats([], 0);
+        return;
+      }
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      let todayCount = 0;
+      let todayTotalMl = 0;
+
+      records.forEach(item => {
+        // 格式化日期時間 (例如：09/27 14:30)
+        const dateObj = new Date(item.timestamp);
+        const monthDay = `${String(dateObj.getMonth() + 1).padStart(2, '0')}/${String(dateObj.getDate()).padStart(2, '0')}`;
+        const hoursMin = `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+        
+        // 累計當天統計數據
+        const itemDateStr = dateObj.toISOString().slice(0, 10);
+        if (itemDateStr === todayStr) {
+          todayCount++;
+          todayTotalMl += item.actual;
+        }
+
+        // 渲染卡片
+        const card = document.createElement('div');
+        card.className = 'history-card';
+        card.innerHTML = `
+          <div class="card-info">
+            <div class="card-time">📅 ${monthDay} ${hoursMin}</div>
+            <div class="card-type">${item.type}</div>
+          </div>
+          <div style="display:flex; align-items:center;">
+            <div class="card-amount">
+              <div class="actual-ml">${item.actual} <span style="font-size:0.8rem;">ml</span></div>
+              ${item.total > 0 ? `<div class="detail-ml">(泡 ${item.total} / 剩 ${item.leftover})</div>` : ''}
+            </div>
+            <button class="delete-btn" onclick="deleteRecord(${item.id})">🗑️</button>
+          </div>
+        `;
+        HISTORY_LIST.appendChild(card);
+      });
+
+      updateStats(todayCount, todayTotalMl);
+    }
+
+    // 更新每日統計數據
+    function updateStats(count, totalMl) {
+      document.getElementById('stat-count').innerText = `${count} 次`;
+      document.getElementById('stat-total-ml').innerText = `${totalMl} ml`;
+    }
+
+    // 刪除單筆紀錄
+    function deleteRecord(id) {
+      if (confirm('確定要刪除這筆紀錄嗎？')) {
+        let records = JSON.parse(localStorage.getItem('baby_feeding_logs')) || [];
+        records = records.filter(item => item.id !== id);
+        localStorage.setItem('baby_feeding_logs', JSON.stringify(records));
+        loadHistory();
+      }
+    }
+
+    // 清空全部紀錄
+    function clearAllData() {
+      if (confirm('⚠️ 確定要刪除「全部」餵奶紀錄嗎？此動作無法復原喔！')) {
+        localStorage.removeItem('baby_feeding_logs');
+        loadHistory();
+      }
+    }
+  </script>
+</body>
+</html>
