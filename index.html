@@ -53,7 +53,10 @@
     .record-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background-color: #FAF9F6; border-radius: 10px; border-left: 4px solid var(--primary-pink); }
     .record-info .time { font-size: 0.9rem; font-weight: 600; }
     .record-info .detail { font-size: 0.78rem; color: var(--text-sub); }
+    .record-right { display: flex; align-items: center; gap: 10px; }
     .record-amount { font-size: 1.05rem; font-weight: bold; color: #D8707C; }
+    .btn-del { background: none; border: none; color: #CCC; font-size: 0.9rem; cursor: pointer; padding: 2px 4px; }
+    .btn-del:active { color: #FF5252; }
   </style>
 </head>
 <body>
@@ -118,20 +121,20 @@
         <h2>📜 最近 12 小時紀錄</h2>
       </div>
       <div id="record-list" class="record-list">
-        <div style="text-align:center; color:#999; padding: 10px;">資料載入與同步中...</div>
+        <div style="text-align:center; color:#999; padding: 10px;">資料同步中...</div>
       </div>
     </div>
   </div>
 
   <script>
-    // ⚠️ 請填入你的 GAS 發布 Web App 網址（若有使用雲端同步）
+    // ⚠️ 請填入您的 GAS 發布 Web App 網址
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbw8dPU0GDoC5_GEM1VFeYNQXGtXtAHNrzyph_W-kqFlpcEFRZ2qf77DyidRfrAxkwjQXA/exec';
     let currentFeedType = '配方奶';
     let records = [];
 
     window.onload = function() {
       setFutureTime(5);
-      fetchCloudRecords(); // 開啟網頁時自動抓取最新資料
+      fetchCloudRecords();
 
       document.querySelectorAll('.type-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -168,7 +171,6 @@
       document.getElementById('feed-amount').focus();
     }
 
-    // 開啟網頁自動從雲端與 LocalStorage 載入資料
     function fetchCloudRecords() {
       const localData = localStorage.getItem('baby_feed_records');
       if (localData) {
@@ -176,7 +178,7 @@
         renderDashboard();
       }
 
-      if (GAS_URL && GAS_URL !== 'https://script.google.com/macros/s/AKfycbw8dPU0GDoC5_GEM1VFeYNQXGtXtAHNrzyph_W-kqFlpcEFRZ2qf77DyidRfrAxkwjQXA/exec') {
+      if (GAS_URL && GAS_URL !== 'YOUR_GAS_WEB_APP_URL_HERE') {
         fetch(GAS_URL)
           .then(res => res.json())
           .then(data => {
@@ -209,7 +211,6 @@
       localStorage.setItem('baby_feed_records', JSON.stringify(records));
       renderDashboard();
 
-      // 上傳雲端
       if (GAS_URL && GAS_URL !== 'YOUR_GAS_WEB_APP_URL_HERE') {
         fetch(GAS_URL, {
           method: 'POST',
@@ -221,6 +222,21 @@
       document.getElementById('feed-amount').value = '';
       alert('已成功紀錄！');
     });
+
+    function deleteRecord(id) {
+      if (!confirm('確定要刪除這筆紀錄嗎？')) return;
+      
+      records = records.filter(r => r.id !== id);
+      localStorage.setItem('baby_feed_records', JSON.stringify(records));
+      renderDashboard();
+
+      if (GAS_URL && GAS_URL !== 'YOUR_GAS_WEB_APP_URL_HERE') {
+        fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'delete', id: id })
+        });
+      }
+    }
 
     function renderDashboard() {
       if (records.length === 0) {
@@ -241,7 +257,7 @@
       }
       document.getElementById('last-amount').innerText = `${latest.amount} ml`;
 
-      // 最近 12 小時
+      // 篩選最近 12 小時
       const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
       const recentRecords = records.filter(r => r.timestamp >= twelveHoursAgo);
 
@@ -261,7 +277,10 @@
             <div class="time">${r.timeStr.substring(5)}</div>
             <div class="detail">${r.type}</div>
           </div>
-          <div class="record-amount">${r.amount} ml</div>
+          <div class="record-right">
+            <div class="record-amount">${r.amount} ml</div>
+            <button class="btn-del" onclick="deleteRecord(${r.id})" title="刪除">🗑️</button>
+          </div>
         `;
         listEl.appendChild(item);
       });
