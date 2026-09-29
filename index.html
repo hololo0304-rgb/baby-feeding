@@ -57,6 +57,8 @@
     .record-amount { font-size: 1.05rem; font-weight: bold; color: #D8707C; }
     .btn-del { background: none; border: none; color: #CCC; font-size: 0.9rem; cursor: pointer; padding: 2px 4px; }
     .btn-del:active { color: #FF5252; }
+    
+    .debug-box { font-size: 0.75rem; color: #D32F2F; background: #FFEBEE; padding: 8px; border-radius: 8px; margin-top: 10px; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -123,12 +125,14 @@
       <div id="record-list" class="record-list">
         <div style="text-align:center; color:#999; padding: 10px;">資料同步中...</div>
       </div>
+      <div id="debug-log" class="debug-box" style="display:none;"></div>
     </div>
   </div>
 
   <script>
-    // ⚠️ 請填入您的 GAS 發布 Web App 網址
+    // ⚠️ 請在此處貼上您測試出 A 情況的完整 GAS Web App 網址（結尾為 /exec）
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbw8dPU0GDoC5_GEM1VFeYNQXGtXtAHNrzyph_W-kqFlpcEFRZ2qf77DyidRfrAxkwjQXA/exec';
+    
     let currentFeedType = '配方奶';
     let records = [];
 
@@ -144,6 +148,12 @@
         });
       });
     };
+
+    function logDebug(msg) {
+      const dbg = document.getElementById('debug-log');
+      dbg.style.display = 'block';
+      dbg.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+    }
 
     function setFutureTime(minutesToAdd) {
       const now = new Date();
@@ -172,23 +182,40 @@
     }
 
     function fetchCloudRecords() {
+      if (!GAS_URL || GAS_URL === 'YOUR_GAS_WEB_APP_URL_HERE') {
+        logDebug('⚠️ 提示：未填寫 GAS_URL 網址，將僅使用本機紀錄。');
+        loadLocalRecords();
+        return;
+      }
+
+      logDebug('正從雲端抓取資料...');
+      fetch(GAS_URL, { redirect: 'follow' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success' && data.records) {
+            logDebug(`雲端同步成功，共 ${data.records.length} 筆資料`);
+            records = data.records;
+            localStorage.setItem('baby_feed_records', JSON.stringify(records));
+            renderDashboard();
+          } else {
+            logDebug('雲端回傳狀態非 success 或無 records');
+            loadLocalRecords();
+          }
+        })
+        .catch(err => {
+          logDebug('雲端抓取失敗: ' + err.toString());
+          loadLocalRecords();
+        });
+    }
+
+    function loadLocalRecords() {
       const localData = localStorage.getItem('baby_feed_records');
       if (localData) {
         records = JSON.parse(localData);
+        logDebug(`載入本機快取共 ${records.length} 筆資料`);
         renderDashboard();
-      }
-
-      if (GAS_URL && GAS_URL !== 'https://script.google.com/macros/s/AKfycbw8dPU0GDoC5_GEM1VFeYNQXGtXtAHNrzyph_W-kqFlpcEFRZ2qf77DyidRfrAxkwjQXA/exec') {
-        fetch(GAS_URL)
-          .then(res => res.json())
-          .then(data => {
-            if (data.status === 'success' && data.records) {
-              records = data.records;
-              localStorage.setItem('baby_feed_records', JSON.stringify(records));
-              renderDashboard();
-            }
-          })
-          .catch(err => console.error('Cloud load error:', err));
+      } else {
+        renderDashboard();
       }
     }
 
@@ -199,12 +226,15 @@
 
       if (isNaN(amountVal)) return;
 
+      const formattedTimeStr = timeVal.replace('T', ' ');
       const newRecord = {
-        id: Date.now(),
+        id: String(Date.now()),
         timestamp: new Date(timeVal).getTime(),
-        timeStr: timeVal.replace('T', ' '),
+        timeStr: formattedTimeStr,
         type: currentFeedType,
-        amount: amountVal
+        amount: amountVal,
+        totalAmount: amountVal,
+        leftAmount: 0
       };
 
       records.unshift(newRecord);
@@ -214,8 +244,10 @@
       if (GAS_URL && GAS_URL !== 'YOUR_GAS_WEB_APP_URL_HERE') {
         fetch(GAS_URL, {
           method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'add', record: newRecord })
-        });
+        }).then(() => logDebug('新紀錄已推送到雲端'));
       }
 
       setFutureTime(5);
@@ -226,15 +258,17 @@
     function deleteRecord(id) {
       if (!confirm('確定要刪除這筆紀錄嗎？')) return;
       
-      records = records.filter(r => r.id !== id);
+      records = records.filter(r => String(r.id) !== String(id));
       localStorage.setItem('baby_feed_records', JSON.stringify(records));
       renderDashboard();
 
       if (GAS_URL && GAS_URL !== 'YOUR_GAS_WEB_APP_URL_HERE') {
         fetch(GAS_URL, {
           method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'delete', id: id })
-        });
+        }).then(() => logDebug('已傳送刪除要求至雲端'));
       }
     }
 
@@ -257,7 +291,6 @@
       }
       document.getElementById('last-amount').innerText = `${latest.amount} ml`;
 
-      // 篩選最近 12 小時
       const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
       const recentRecords = records.filter(r => r.timestamp >= twelveHoursAgo);
 
@@ -279,7 +312,7 @@
           </div>
           <div class="record-right">
             <div class="record-amount">${r.amount} ml</div>
-            <button class="btn-del" onclick="deleteRecord(${r.id})" title="刪除">🗑️</button>
+            <button class="btn-del" onclick="deleteRecord('${r.id}')" title="刪除">🗑️</button>
           </div>
         `;
         listEl.appendChild(item);
