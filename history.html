@@ -53,18 +53,50 @@
       loadHistory();
     };
 
+    function normalizeRecord(r) {
+      let timeStr = r.timeStr || r.time || r['時間'] || '';
+      let type = r.type || r['方式'] || '配方奶';
+      let prepared = Number(r.prepared || r.prepAmount || 0);
+      let remaining = Number(r.remaining || r.amount || 0);
+      let consumed = Number(r.consumed || r.actualAmount || 0);
+
+      if (!consumed && prepared > 0) {
+        consumed = Math.max(0, prepared - remaining);
+      } else if (!consumed) {
+        consumed = remaining;
+      }
+
+      if (timeStr && timeStr.length >= 16) {
+        timeStr = timeStr.replace('T', ' ').substring(0, 16);
+      }
+
+      return {
+        id: r.id || Date.now(),
+        timestamp: r.timestamp || (timeStr ? new Date(timeStr).getTime() : Date.now()),
+        timeStr: timeStr,
+        type: type,
+        consumed: consumed
+      };
+    }
+
     function loadHistory() {
       const localData = localStorage.getItem('baby_feed_records');
-      let records = localData ? JSON.parse(localData) : [];
-      renderHistory(records);
+      let records = [];
+      if (localData) {
+        try {
+          records = JSON.parse(localData).map(normalizeRecord);
+          renderHistory(records);
+        } catch(e) {}
+      }
 
       if (GAS_URL && GAS_URL !== 'YOUR_GAS_WEB_APP_URL_HERE') {
         fetch(GAS_URL)
           .then(res => res.json())
           .then(data => {
             if (data.status === 'success' && data.records) {
-              localStorage.setItem('baby_feed_records', JSON.stringify(data.records));
-              renderHistory(data.records);
+              records = data.records.map(normalizeRecord);
+              localStorage.setItem('baby_feed_records', JSON.stringify(records));
+              renderHistory(records);
             }
           });
       }
@@ -89,7 +121,7 @@
             <span class="time-str">${r.timeStr}</span>
           </div>
           <div class="item-right">
-            <span class="amount-val">${r.amount} ml</span>
+            <span class="amount-val">${r.consumed} ml</span>
             <button class="btn-del" onclick="deleteRecord(${r.id})" title="刪除">🗑️</button>
           </div>
         `;
