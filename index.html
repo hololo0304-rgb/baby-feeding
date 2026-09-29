@@ -1,5 +1,5 @@
 <script>
-  // ⚠️ 請務必確認這裡貼上的就是你剛剛測試出 A 情況的完整 GAS 網址！
+  // ⚠️ 請確認這是你測試成功的 GAS /exec 網址
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbw8dPU0GDoC5_GEM1VFeYNQXGtXtAHNrzyph_W-kqFlpcEFRZ2qf77DyidRfrAxkwjQXA/exec';
   let currentFeedType = '配方奶';
   let records = [];
@@ -43,35 +43,42 @@
     document.getElementById('feed-amount').focus();
   }
 
-  // 強制從雲端獲取最新歷史紀錄並更新
+  // 螢幕除錯 Log 輸出
+  function debugLog(msg) {
+    const listEl = document.getElementById('record-list');
+    listEl.innerHTML += `<div style="font-size:0.75rem; color:#d32f2f; padding:2px; text-align:left; word-break:break-all;">[Debug] ${msg}</div>`;
+  }
+
   function fetchCloudRecords() {
-    if (GAS_URL && !GAS_URL.includes('YOUR_GAS_WEB_APP_URL_HERE')) {
-      fetch(GAS_URL)
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === 'success' && data.records) {
-            records = data.records;
-            // 寫入本地端，讓兩邊保持同步
-            localStorage.setItem('baby_feed_records', JSON.stringify(records));
-            renderDashboard();
-          }
-        })
-        .catch(err => {
-          console.error('Cloud load error:', err);
-          // 若沒網路才讀取 LocalStorage 快取
-          const localData = localStorage.getItem('baby_feed_records');
-          if (localData) {
-            records = JSON.parse(localData);
-            renderDashboard();
-          }
-        });
-    } else {
-      const localData = localStorage.getItem('baby_feed_records');
-      if (localData) {
-        records = JSON.parse(localData);
-        renderDashboard();
-      }
+    const listEl = document.getElementById('record-list');
+    listEl.innerHTML = '<div style="text-align:center; color:#999; padding: 10px;">正在嘗試連線雲端資料庫...</div>';
+
+    if (!GAS_URL || GAS_URL.includes('YOUR_GAS_WEB_APP_URL_HERE')) {
+      debugLog('錯誤：尚未設定 GAS_URL 網址！');
+      return;
     }
+
+    debugLog('發送 Request 到：' + GAS_URL);
+
+    // 使用 follow 處理 GAS 的 302 重定向
+    fetch(GAS_URL, { redirect: 'follow' })
+      .then(res => {
+        debugLog('收到回應 HTTP Status: ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        debugLog('回傳 JSON 成功，筆數：' + (data.records ? data.records.length : 0));
+        if (data.status === 'success' && data.records) {
+          records = data.records;
+          localStorage.setItem('baby_feed_records', JSON.stringify(records));
+          renderDashboard();
+        } else {
+          debugLog('data.status 不為 success 或無 records');
+        }
+      })
+      .catch(err => {
+        debugLog('Fetch 捕捉到錯誤：' + err.toString());
+      });
   }
 
   document.getElementById('feed-form').addEventListener('submit', function(e) {
@@ -99,6 +106,8 @@
     if (GAS_URL && !GAS_URL.includes('YOUR_GAS_WEB_APP_URL_HERE')) {
       fetch(GAS_URL, {
         method: 'POST',
+        mode: 'no-cors', // 解決 CORS 跨域 POST 阻擋
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'add', record: newRecord })
       });
     }
@@ -118,6 +127,8 @@
     if (GAS_URL && !GAS_URL.includes('YOUR_GAS_WEB_APP_URL_HERE')) {
       fetch(GAS_URL, {
         method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'delete', id: id })
       });
     }
