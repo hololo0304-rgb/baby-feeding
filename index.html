@@ -1,131 +1,663 @@
-body {
-  font-family: 'Zen Maru Gothic', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: #FFF9F5;
-  color: #4A4A4A;
-}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>寶寶餵奶雲端紀錄</title>
+  <style>
+    :root {
+      --bg-color: #FFF9F5;
+      --card-bg: #FFFFFF;
+      --primary-pink: #FFB7B2;
+      --primary-pink-hover: #FF9E99;
+      --soft-blue: #E2F0CB;
+      --soft-yellow: #FFF1C5;
+      --soft-purple: #E0C3FC;
+      --text-main: #4A4A4A;
+      --text-sub: #7D7D7D;
+      --border-color: #FFE5D9;
+      --shadow: 0 4px 15px rgba(255, 183, 178, 0.18);
+      --radius: 16px;
+    }
 
-.btn-type.active {
-  background-color: #FBCFE8;
-  border-color: #F472B6;
-  color: #9D174D;
-  font-weight: 700;
-}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-.btn-amount.active {
-  background-color: #DBEAFE;
-  border-color: #60A5FA;
-  color: #1E40AF;
-  font-weight: 700;
-}
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      padding: 12px;
+      min-height: 100vh;
+    }
 
-/* iOS Input 隱藏原生箭頭與背景美化 */
-input[type="datetime-local"], input[type="number"] {
-  -webkit-appearance: none;
-}
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
 
+    header {
+      text-align: center;
+      padding: 6px 0 2px 0;
+    }
 
-<!-- 頁頭標題 -->
-<header class="text-center py-2">
-  <h1 class="text-2xl font-black text-rose-400 tracking-wider flex items-center justify-center gap-2">
-    <span>🍼</span> 寶寶餵奶雲端紀錄
-  </h1>
-</header>
+    header h1 {
+      font-size: 1.4rem;
+      color: #5C6B73;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
 
-<!-- 摘要數據卡片 -->
-<div class="bg-gradient-to-r from-pink-100 via-rose-50 to-amber-100 rounded-3xl p-4 shadow-sm border border-pink-200/60 flex justify-around items-center text-center">
-  <div>
-    <div class="text-xs font-bold text-gray-500 mb-1">距離上一餐已過</div>
-    <div class="text-xl font-black text-rose-500" id="time-since-last">--</div>
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* 上方統計摘要卡片 */
+    .summary-card {
+      background: linear-gradient(135deg, #FFE5D9 0%, #FFF1E6 100%);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      text-align: center;
+      border: none;
+      padding: 14px;
+    }
+
+    .summary-item h3 {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+    }
+
+    .summary-item .val {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #D8707C;
+    }
+
+    /* 表單元件樣式 */
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    .time-input-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="datetime-local"],
+    input[type="number"] {
+      width: 100%;
+      height: 46px;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0 10px;
+      font-size: 0.95rem;
+      outline: none;
+      background-color: #FAF9F6;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--primary-pink);
+      background-color: #FFF;
+    }
+
+    .btn-now {
+      flex-shrink: 0;
+      padding: 0 12px;
+      height: 46px;
+      background-color: var(--soft-blue);
+      border: none;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #556B2F;
+      cursor: pointer;
+    }
+
+    /* 餵奶方式選擇區 */
+    .type-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .type-btn {
+      height: 46px;
+      border: 2px solid var(--border-color);
+      background: #FFF;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text-main);
+    }
+
+    .type-btn.active {
+      background-color: var(--primary-pink);
+      color: white;
+      border-color: var(--primary-pink);
+    }
+
+    /* 快捷奶量按鈕區 */
+    .preset-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .preset-btn {
+      height: 38px;
+      border: 1.5px solid var(--border-color);
+      background-color: #FFF;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #4A4A4A;
+      transition: all 0.15s;
+    }
+
+    .preset-btn:active {
+      background-color: var(--primary-pink);
+      color: #FFF;
+    }
+
+    .calc-hint {
+      font-size: 0.8rem;
+      color: #D8707C;
+      margin-top: 4px;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    /* 主按鈕 */
+    .btn-submit {
+      width: 100%;
+      height: 50px;
+      background-color: var(--primary-pink);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      font-size: 1.05rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 6px;
+      box-shadow: 0 4px 10px rgba(255, 183, 178, 0.4);
+      transition: background 0.2s;
+    }
+
+    .btn-submit:active {
+      background-color: var(--primary-pink-hover);
+    }
+
+    /* 中間功能切換按鈕組 */
+    .action-btn-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-action {
+      flex: 1;
+      height: 42px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border-color);
+      background-color: #FFF;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      text-decoration: none;
+    }
+
+    .btn-action.left-btn {
+      background-color: #F0F4C3;
+      border-color: #DCE775;
+      color: #33691E;
+    }
+
+    .btn-action.right-btn {
+      background-color: #E1F5FE;
+      border-color: #81D4FA;
+      color: #0277BD;
+    }
+
+    /* 歷史紀錄列表 */
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .list-header h2 {
+      font-size: 1rem;
+      color: var(--text-main);
+    }
+
+    .record-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .record-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background-color: #FAF9F6;
+      border-radius: 10px;
+      border-left: 4px solid var(--primary-pink);
+    }
+
+    .record-info .time {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .record-info .detail {
+      font-size: 0.78rem;
+      color: var(--text-sub);
+    }
+
+    .record-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .record-amount {
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: #D8707C;
+    }
+
+    .btn-del {
+      background: none;
+      border: none;
+      color: #CCC;
+      font-size: 0.9rem;
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+
+    .btn-del:active {
+      color: #FF5252;
+    }
+
+    .debug-box {
+      font-size: 0.75rem;
+      color: #D32F2F;
+      background: #FFEBEE;
+      padding: 8px;
+      border-radius: 8px;
+      margin-top: 10px;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <header>
+      <h1>🍼 寶寶餵奶雲端紀錄</h1>
+    </header>
+
+    <!-- 時間與前次資訊摘要卡片 -->
+    <div class="card summary-card">
+      <div class="summary-item">
+        <h3>距離上一餐已過</h3>
+        <div class="val" id="time-since-last">--</div>
+      </div>
+      <div class="summary-item">
+        <h3>上一餐實際喝量</h3>
+        <div class="val" id="last-amount">--</div>
+      </div>
+    </div>
+
+    <!-- 新增紀錄表單 -->
+    <div class="card">
+      <form id="feed-form">
+        <div class="form-group">
+          <label>⏰ 餵奶時間</label>
+          <div class="time-input-group">
+            <input type="datetime-local" id="feed-time" required>
+            <button type="button" class="btn-now" onclick="setFutureTime(5)">+5分鐘</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>🍼 餵奶方式</label>
+          <div class="type-selector">
+            <button type="button" class="type-btn active" data-type="配方奶">配方奶</button>
+            <button type="button" class="type-btn" data-type="瓶餵母奶">瓶餵母奶</button>
+            <button type="button" class="type-btn" data-type="親餵">親餵</button>
+          </div>
+        </div>
+
+        <div class="form-group" id="prep-group">
+          <label>🥛 準備/泡奶量 (ml)</label>
+          <div class="preset-container">
+            <button type="button" class="preset-btn" onclick="setPresetAmount(60)">60</button>
+            <button type="button" class="preset-btn" onclick="setPresetAmount(90)">90</button>
+            <button type="button" class="preset-btn" onclick="setPresetAmount(120)">120</button>
+            <button type="button" class="preset-btn" onclick="setPresetAmount(150)">150</button>
+          </div>
+          <input type="number" id="prep-amount" placeholder="輸入泡奶量 ml" inputmode="numeric">
+        </div>
+
+        <div class="form-group" id="rest-group">
+          <label>🥣 剩餘奶量 (ml) <span style="font-size:0.75rem; font-weight:normal; color:#888;">(沒剩下請填 0)</span></label>
+          <input type="number" id="rest-amount" value="0" placeholder="0" inputmode="numeric">
+          <div class="calc-hint" id="actual-calc-hint">實際喝量：0 ml</div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submit-btn">✨ 紀錄這餐</button>
+      </form>
+    </div>
+
+    <!-- 功能頁面快捷按鈕區 -->
+    <div class="action-btn-group">
+      <a href="history.html" class="btn-action left-btn">📜 歷史紀錄</a>
+      <button type="button" class="btn-action right-btn" onclick="prepareUpdateLastRemaining()">✏️ 補填/修改前次剩餘量</button>
+    </div>
+
+    <!-- 最近紀錄列表 -->
+    <div class="card">
+      <div class="list-header">
+        <h2>📜 最近 12 小時紀錄</h2>
+      </div>
+      <div id="record-list" class="record-list">
+        <div style="text-align:center; color:#999; padding: 10px;">資料同步中...</div>
+      </div>
+      <div id="debug-log" class="debug-box" style="display:none;"></div>
+    </div>
   </div>
-  <div class="h-8 w-[1px] bg-pink-200"></div>
-  <div>
-    <div class="text-xs font-bold text-gray-500 mb-1">上一餐實際喝量</div>
-    <div class="text-xl font-black text-rose-500"><span id="last-amount">--</span> <span class="text-xs">ml</span></div>
-  </div>
-</div>
 
-<!-- 主要輸入表單卡片 -->
-<div class="bg-white rounded-3xl p-5 shadow-sm border border-pink-100/80">
-  <form id="feed-form" onsubmit="event.preventDefault();">
+  <script>
+    // ⚠️ GAS Web App 部署網址 (已自動帶入您的 GAS URL)
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbw8dPU0GDoC5_GEM1VFeYNQXGtXtAHNrzyph_W-kqFlpcEFRZ2qf77DyidRfrAxkwjQXA/exec';
     
-    <!-- ⏰ 餵奶時間 -->
-    <div class="mb-4">
-      <label class="font-bold flex items-center gap-1 text-gray-700 text-sm mb-1.5">
-        ⏰ 餵奶時間
-      </label>
-      <div class="flex gap-2">
-        <input type="datetime-local" id="timeInput" required class="flex-1 border-2 border-pink-100 bg-pink-50/30 rounded-2xl p-2.5 text-rose-600 font-bold text-sm focus:outline-none focus:border-pink-300">
-        <button type="button" onclick="addMinutes(5)" class="bg-emerald-100 text-emerald-800 px-3 py-2.5 rounded-2xl font-bold text-xs hover:bg-emerald-200 active:scale-95 transition flex-shrink-0">
-          +5分鐘
-        </button>
-      </div>
-    </div>
+    let currentFeedType = '配方奶';
+    let records = [];
 
-    <!-- 🍼 餵奶方式 -->
-    <div class="mb-4">
-      <label class="font-bold flex items-center gap-1 text-gray-700 text-sm mb-1.5">
-        🍼 餵奶方式
-      </label>
-      <div class="grid grid-cols-3 gap-2">
-        <button type="button" class="btn-type active border-2 border-pink-100 py-2.5 rounded-2xl font-bold text-sm text-gray-600 bg-white active:scale-95 transition" onclick="setType(this, '配方奶')">配方奶</button>
-        <button type="button" class="btn-type border-2 border-pink-100 py-2.5 rounded-2xl font-bold text-sm text-gray-600 bg-white active:scale-95 transition" onclick="setType(this, '瓶餵母奶')">瓶餵母奶</button>
-        <button type="button" class="btn-type border-2 border-pink-100 py-2.5 rounded-2xl font-bold text-sm text-gray-600 bg-white active:scale-95 transition" onclick="setType(this, '親餵')">親餵</button>
-      </div>
-    </div>
+    window.onload = function() {
+      setFutureTime(5);
+      fetchCloudRecords();
+      setupEventListeners();
+    };
 
-    <!-- 🥛 準備/泡奶量 -->
-    <div class="mb-4">
-      <label class="font-bold flex items-center gap-1 text-gray-700 text-sm mb-1.5">
-        🥛 準備/泡奶量 (ml)
-      </label>
-      <div class="grid grid-cols-4 gap-2 mb-2">
-        <button type="button" class="btn-amount border-2 border-pink-100 py-1.5 rounded-xl text-blue-500 font-bold text-xs bg-white hover:bg-blue-50 transition" onclick="setPrepAmount(this, 60)">60</button>
-        <button type="button" class="btn-amount border-2 border-pink-100 py-1.5 rounded-xl text-blue-500 font-bold text-xs bg-white hover:bg-blue-50 transition" onclick="setPrepAmount(this, 90)">90</button>
-        <button type="button" class="btn-amount border-2 border-pink-100 py-1.5 rounded-xl text-blue-500 font-bold text-xs bg-white hover:bg-blue-50 transition" onclick="setPrepAmount(this, 120)">120</button>
-        <button type="button" class="btn-amount border-2 border-pink-100 py-1.5 rounded-xl text-blue-500 font-bold text-xs bg-white hover:bg-blue-50 transition" onclick="setPrepAmount(this, 150)">150</button>
-      </div>
-      <input type="number" id="prepInput" placeholder="輸入奶量 ml" required class="w-full border-2 border-pink-100 bg-pink-50/20 rounded-2xl p-2.5 text-gray-700 font-bold focus:outline-none focus:border-pink-300">
-    </div>
+    function setupEventListeners() {
+      // 餵奶方式切換
+      document.querySelectorAll('.type-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          currentFeedType = this.getAttribute('data-type');
+          toggleInputsByMode();
+        });
+      });
 
-    <!-- 🥣 剩餘奶量 -->
-    <div class="mb-5">
-      <label class="font-bold flex items-center justify-between text-gray-700 text-sm mb-1.5">
-        <span>🥣 剩餘奶量 (ml)</span>
-        <span class="text-xs text-gray-400 font-normal">沒剩下請填 0</span>
-      </label>
-      <input type="number" id="restInput" value="0" placeholder="0" required class="w-full border-2 border-pink-100 bg-pink-50/20 rounded-2xl p-2.5 text-gray-700 font-bold focus:outline-none focus:border-pink-300">
-    </div>
+      // 動態計算實際喝量
+      document.getElementById('prep-amount').addEventListener('input', calculateActual);
+      document.getElementById('rest-amount').addEventListener('input', calculateActual);
+    }
 
-    <!-- 提交按鈕 -->
-    <button type="button" onclick="saveRecord()" id="submitBtn" class="w-full bg-rose-400 hover:bg-rose-500 active:scale-98 text-white font-black py-3.5 rounded-2xl shadow-sm text-base transition flex items-center justify-center gap-2">
-      ✨ 記錄這餐
-    </button>
-  </form>
-</div>
+    function toggleInputsByMode() {
+      const prepGroup = document.getElementById('prep-group');
+      const restGroup = document.getElementById('rest-group');
+      if (currentFeedType === '親餵') {
+        prepGroup.style.display = 'none';
+        restGroup.style.display = 'none';
+      } else {
+        prepGroup.style.display = 'block';
+        restGroup.style.display = 'block';
+      }
+      calculateActual();
+    }
 
-<!-- 快捷操作按鈕組 -->
-<div class="grid grid-cols-2 gap-2.5">
-  <a href="history.html" class="bg-lime-100 hover:bg-lime-200 text-lime-900 border border-lime-300/60 font-bold py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-1 transition shadow-sm">
-    📜 歷史紀錄
-  </a>
-  <button type="button" onclick="prepareUpdateLastRemaining()" class="bg-sky-100 hover:bg-sky-200 text-sky-900 border border-sky-300/60 font-bold py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-1 transition shadow-sm">
-    ✏️ 補填/修改前次剩餘量
-  </button>
-</div>
+    function calculateActual() {
+      const prep = parseInt(document.getElementById('prep-amount').value, 10) || 0;
+      const rest = parseInt(document.getElementById('rest-amount').value, 10) || 0;
+      const actual = Math.max(0, prep - rest);
+      document.getElementById('actual-calc-hint').innerText = `實際喝量：${actual} ml`;
+    }
 
-<!-- 最近 12 小時紀錄卡片列表 -->
-<div class="bg-white rounded-3xl p-5 shadow-sm border border-pink-100/80">
-  <div class="flex justify-between items-center mb-3">
-    <h2 class="font-bold text-gray-700 text-sm flex items-center gap-1">
-      <span>📜</span> 最近 12 小時紀錄
-    </h2>
-    <span id="sync-status" class="text-[10px] bg-pink-50 text-pink-500 px-2 py-0.5 rounded-full border border-pink-200">同步中...</span>
-  </div>
+    function logDebug(msg) {
+      const dbg = document.getElementById('debug-log');
+      dbg.style.display = 'block';
+      dbg.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+    }
 
-  <div id="record-list" class="space-y-2">
-    <div class="text-center text-gray-400 py-6 text-sm">資料讀取中...</div>
-  </div>
+    function setFutureTime(minutesToAdd) {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + minutesToAdd);
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('feed-time').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
 
-  <!-- 除錯訊息顯示區 (必要時開啓) -->
-  <div id="debug-log" class="hidden mt-4 text-[11px] text-red-500 bg-red-50 p-2.5 rounded-xl border border-red-200 break-all space-y-1"></div>
-</div>
+    function setPresetAmount(val) {
+      document.getElementById('prep-amount').value = val;
+      calculateActual();
+    }
+
+    function prepareUpdateLastRemaining() {
+      if (records.length === 0) {
+        alert('目前還沒有紀錄喔！');
+        return;
+      }
+      const lastRec = records[0];
+      const restInput = prompt(`修改上一餐 (${lastRec.timeStr}) 剩餘奶量 (ml)：`, lastRec.restAmount || 0);
+      if (restInput !== null) {
+        const newRest = parseInt(restInput, 10) || 0;
+        lastRec.restAmount = newRest;
+        lastRec.actualAmount = Math.max(0, (lastRec.prepAmount || 0) - newRest);
+        
+        localStorage.setItem('baby_feed_records', JSON.stringify(records));
+        renderDashboard();
+        
+        // 此處同步更新 GAS 雲端
+        if (GAS_URL) {
+          fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'add', record: lastRec })
+          }).then(() => logDebug('前次剩餘量已更新至雲端'));
+        }
+      }
+    }
+
+    function fetchCloudRecords() {
+      if (!GAS_URL) {
+        loadLocalRecords();
+        return;
+      }
+
+      fetch(GAS_URL, { redirect: 'follow' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success' && data.records) {
+            records = data.records;
+            localStorage.setItem('baby_feed_records', JSON.stringify(records));
+            renderDashboard();
+          } else {
+            loadLocalRecords();
+          }
+        })
+        .catch(err => {
+          logDebug('雲端讀取失敗，使用本機快取: ' + err.toString());
+          loadLocalRecords();
+        });
+    }
+
+    function loadLocalRecords() {
+      const localData = localStorage.getItem('baby_feed_records');
+      if (localData) {
+        records = JSON.parse(localData);
+      }
+      renderDashboard();
+    }
+
+    // 提交新紀錄
+    document.getElementById('feed-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const timeVal = document.getElementById('feed-time').value;
+      const formattedTimeStr = timeVal.replace('T', ' ');
+
+      let prepAmt = 0;
+      let restAmt = 0;
+      let actualAmt = 0;
+
+      if (currentFeedType !== '親餵') {
+        prepAmt = parseInt(document.getElementById('prep-amount').value, 10);
+        restAmt = parseInt(document.getElementById('rest-amount').value, 10) || 0;
+        if (isNaN(prepAmt)) {
+          alert('請輸入準備/泡奶量');
+          return;
+        }
+        actualAmt = Math.max(0, prepAmt - restAmt);
+      }
+
+      const newRecord = {
+        id: String(Date.now()),
+        timeStr: formattedTimeStr,
+        type: currentFeedType,
+        prepAmount: prepAmt,
+        restAmount: restAmt,
+        actualAmount: actualAmt
+      };
+
+      records.unshift(newRecord);
+      localStorage.setItem('baby_feed_records', JSON.stringify(records));
+      renderDashboard();
+
+      if (GAS_URL) {
+        fetch(GAS_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'add', record: newRecord })
+        }).then(() => logDebug('新紀錄已推送到雲端'));
+      }
+
+      setFutureTime(5);
+      document.getElementById('prep-amount').value = '';
+      document.getElementById('rest-amount').value = '0';
+      calculateActual();
+      alert('已成功紀錄！');
+    });
+
+    function deleteRecord(id) {
+      if (!confirm('確定要刪除這筆紀錄嗎？')) return;
+      
+      records = records.filter(r => String(r.id) !== String(id));
+      localStorage.setItem('baby_feed_records', JSON.stringify(records));
+      renderDashboard();
+
+      if (GAS_URL) {
+        fetch(GAS_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', id: id })
+        }).then(() => logDebug('已傳送刪除要求至雲端'));
+      }
+    }
+
+    function renderDashboard() {
+      if (records.length === 0) {
+        document.getElementById('time-since-last').innerText = '--';
+        document.getElementById('last-amount').innerText = '--';
+        document.getElementById('record-list').innerHTML = '<div style="text-align:center; color:#999; padding: 10px;">暫無紀錄</div>';
+        return;
+      }
+
+      // 上一餐統計
+      const latest = records[0];
+      const lastTime = new Date(latest.timeStr.replace(/-/g, '/')).getTime();
+      const diffMs = Date.now() - lastTime;
+      
+      if (!isNaN(diffMs) && diffMs > 0) {
+        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        document.getElementById('time-since-last').innerText = `${diffHrs}h ${diffMins}m`;
+      } else {
+        document.getElementById('time-since-last').innerText = '剛紀錄';
+      }
+
+      document.getElementById('last-amount').innerText = latest.type === '親餵' ? '親餵' : `${latest.actualAmount} ml`;
+
+      // 篩選最近 12 小時
+      const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
+      const recentRecords = records.filter(r => {
+        const t = new Date(r.timeStr.replace(/-/g, '/')).getTime();
+        return t >= twelveHoursAgo || isNaN(t);
+      });
+
+      const listEl = document.getElementById('record-list');
+      listEl.innerHTML = '';
+
+      if (recentRecords.length === 0) {
+        listEl.innerHTML = '<div style="text-align:center; color:#999; padding: 10px;">最近 12 小時內無紀錄</div>';
+        return;
+      }
+
+      recentRecords.forEach(r => {
+        const item = document.createElement('div');
+        item.className = 'record-item';
+        const displayAmt = r.type === '親餵' ? '親餵' : `${r.actualAmount} ml`;
+        const subDetail = r.type === '親餵' ? '親餵' : `泡 ${r.prepAmount}ml / 剩 ${r.restAmount}ml`;
+
+        item.innerHTML = `
+          <div class="record-info">
+            <div class="time">${r.timeStr}</div>
+            <div class="detail">${r.type} (${subDetail})</div>
+          </div>
+          <div class="record-right">
+            <div class="record-amount">${displayAmt}</div>
+            <button class="btn-del" onclick="deleteRecord('${r.id}')" title="刪除">🗑️</button>
+          </div>
+        `;
+        listEl.appendChild(item);
+      });
+    }
+  </script>
+</body>
+</html>
