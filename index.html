@@ -301,3 +301,187 @@
 </script>
 </body>
 </html>
+<script>
+  // ⚠️ 請確認這是你測試成功的 GAS /exec 網址
+  const GAS_URL = 'https://script.google.com/macros/s/你的部署ID/exec';
+  let currentFeedType = '配方奶';
+  let records = [];
+
+  window.onload = function() {
+    setFutureTime(5);
+    fetchCloudRecords();
+
+    document.querySelectorAll('.type-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentFeedType = this.getAttribute('data-type');
+      });
+    });
+  };
+
+  function setFutureTime(minutesToAdd) {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + minutesToAdd);
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('feed-time').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  function setPresetAmount(val) {
+    document.getElementById('feed-amount').value = val;
+  }
+
+  function prepareUpdateLastRemaining() {
+    if (records.length === 0) {
+      alert('目前還沒有紀錄喔！');
+      return;
+    }
+    setFutureTime(0);
+    document.getElementById('feed-amount').value = '';
+    document.getElementById('feed-amount').placeholder = '輸入前次剩餘奶量 ml';
+    document.getElementById('feed-amount').focus();
+  }
+
+  // 螢幕除錯 Log 輸出
+  function debugLog(msg) {
+    const listEl = document.getElementById('record-list');
+    listEl.innerHTML += `<div style="font-size:0.75rem; color:#d32f2f; padding:2px; text-align:left; word-break:break-all;">[Debug] ${msg}</div>`;
+  }
+
+  function fetchCloudRecords() {
+    const listEl = document.getElementById('record-list');
+    listEl.innerHTML = '<div style="text-align:center; color:#999; padding: 10px;">正在嘗試連線雲端資料庫...</div>';
+
+    if (!GAS_URL || GAS_URL.includes('YOUR_GAS_WEB_APP_URL_HERE')) {
+      debugLog('錯誤：尚未設定 GAS_URL 網址！');
+      return;
+    }
+
+    debugLog('發送 Request 到：' + GAS_URL);
+
+    // 使用 follow 處理 GAS 的 302 重定向
+    fetch(GAS_URL, { redirect: 'follow' })
+      .then(res => {
+        debugLog('收到回應 HTTP Status: ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        debugLog('回傳 JSON 成功，筆數：' + (data.records ? data.records.length : 0));
+        if (data.status === 'success' && data.records) {
+          records = data.records;
+          localStorage.setItem('baby_feed_records', JSON.stringify(records));
+          renderDashboard();
+        } else {
+          debugLog('data.status 不為 success 或無 records');
+        }
+      })
+      .catch(err => {
+        debugLog('Fetch 捕捉到錯誤：' + err.toString());
+      });
+  }
+
+  document.getElementById('feed-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const timeVal = document.getElementById('feed-time').value;
+    const amountVal = parseInt(document.getElementById('feed-amount').value, 10);
+
+    if (isNaN(amountVal)) return;
+
+    const formattedTimeStr = timeVal.replace('T', ' ');
+    const newRecord = {
+      id: String(Date.now()),
+      timestamp: new Date(timeVal).getTime(),
+      timeStr: formattedTimeStr,
+      type: currentFeedType,
+      amount: amountVal,
+      totalAmount: amountVal,
+      leftAmount: 0
+    };
+
+    records.unshift(newRecord);
+    localStorage.setItem('baby_feed_records', JSON.stringify(records));
+    renderDashboard();
+
+    if (GAS_URL && !GAS_URL.includes('YOUR_GAS_WEB_APP_URL_HERE')) {
+      fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors', // 解決 CORS 跨域 POST 阻擋
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add', record: newRecord })
+      });
+    }
+
+    setFutureTime(5);
+    document.getElementById('feed-amount').value = '';
+    alert('已成功紀錄！');
+  });
+
+  function deleteRecord(id) {
+    if (!confirm('確定要刪除這筆紀錄嗎？')) return;
+    
+    records = records.filter(r => String(r.id) !== String(id));
+    localStorage.setItem('baby_feed_records', JSON.stringify(records));
+    renderDashboard();
+
+    if (GAS_URL && !GAS_URL.includes('YOUR_GAS_WEB_APP_URL_HERE')) {
+      fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id: id })
+      });
+    }
+  }
+
+  function renderDashboard() {
+    if (records.length === 0) {
+      document.getElementById('time-since-last').innerText = '--';
+      document.getElementById('last-amount').innerText = '--';
+      document.getElementById('record-list').innerHTML = '<div style="text-align:center; color:#999; padding: 10px;">暫無紀錄</div>';
+      return;
+    }
+
+    const latest = records[0];
+    const diffMs = Date.now() - latest.timestamp;
+    if (diffMs > 0) {
+      const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      document.getElementById('time-since-last').innerText = `${diffHrs}小時 ${diffMins}分`;
+    } else {
+      document.getElementById('time-since-last').innerText = '剛紀錄';
+    }
+    document.getElementById('last-amount').innerText = `${latest.amount} ml`;
+
+    // 篩選最近 12 小時
+    const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
+    const recentRecords = records.filter(r => r.timestamp >= twelveHoursAgo);
+
+    const listEl = document.getElementById('record-list');
+    listEl.innerHTML = '';
+
+    if (recentRecords.length === 0) {
+      listEl.innerHTML = '<div style="text-align:center; color:#999; padding: 10px;">最近 12 小時內無紀錄</div>';
+      return;
+    }
+
+    recentRecords.forEach(r => {
+      const item = document.createElement('div');
+      item.className = 'record-item';
+      item.innerHTML = `
+        <div class="record-info">
+          <div class="time">${r.timeStr.substring(5)}</div>
+          <div class="detail">${r.type}</div>
+        </div>
+        <div class="record-right">
+          <div class="record-amount">${r.amount} ml</div>
+          <button class="btn-del" onclick="deleteRecord('${r.id}')" title="刪除">🗑️</button>
+        </div>
+      `;
+      listEl.appendChild(item);
+    });
+  }
+</script>
