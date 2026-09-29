@@ -266,6 +266,15 @@
       color: var(--text-main);
     }
 
+    .btn-clear-cache {
+      font-size: 0.75rem;
+      color: #888;
+      background: none;
+      border: none;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
     .record-list {
       display: flex;
       flex-direction: column;
@@ -398,6 +407,7 @@
     <div class="card">
       <div class="list-header">
         <h2>📜 最近 12 小時紀錄</h2>
+        <button type="button" class="btn-clear-cache" onclick="clearLocalCache()">🧹 清除快取並重新同步</button>
       </div>
       <div id="record-list" class="record-list">
         <div style="text-align:center; color:#999; padding: 10px;">資料同步中...</div>
@@ -407,7 +417,7 @@
   </div>
 
   <script>
-    // ⚠️ GAS Web App 部署網址 (已自動帶入您的 GAS URL)
+    // ⚠️ GAS Web App 部署網址
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbw8dPU0GDoC5_GEM1VFeYNQXGtXtAHNrzyph_W-kqFlpcEFRZ2qf77DyidRfrAxkwjQXA/exec';
     
     let currentFeedType = '配方奶';
@@ -420,7 +430,6 @@
     };
 
     function setupEventListeners() {
-      // 餵奶方式切換
       document.querySelectorAll('.type-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
@@ -430,7 +439,6 @@
         });
       });
 
-      // 動態計算實際喝量
       document.getElementById('prep-amount').addEventListener('input', calculateActual);
       document.getElementById('rest-amount').addEventListener('input', calculateActual);
     }
@@ -477,6 +485,29 @@
       calculateActual();
     }
 
+    // 格式修復相容處理（防止 undefined）
+    function normalizeRecord(r) {
+      const prep = Number(r.prepAmount !== undefined ? r.prepAmount : (r.amount !== undefined ? r.amount : (r.totalAmount || 0)));
+      const rest = Number(r.restAmount !== undefined ? r.restAmount : (r.leftAmount || 0));
+      const actual = Number(r.actualAmount !== undefined ? r.actualAmount : Math.max(0, prep - rest));
+
+      return {
+        id: String(r.id || Date.now()),
+        timeStr: r.timeStr || '',
+        type: String(r.type || '配方奶'),
+        prepAmount: prep,
+        restAmount: rest,
+        actualAmount: actual
+      };
+    }
+
+    function clearLocalCache() {
+      localStorage.removeItem('baby_feed_records');
+      records = [];
+      fetchCloudRecords();
+      alert('已清除本機暫存，重新同步雲端資料！');
+    }
+
     function prepareUpdateLastRemaining() {
       if (records.length === 0) {
         alert('目前還沒有紀錄喔！');
@@ -492,7 +523,6 @@
         localStorage.setItem('baby_feed_records', JSON.stringify(records));
         renderDashboard();
         
-        // 此處同步更新 GAS 雲端
         if (GAS_URL) {
           fetch(GAS_URL, {
             method: 'POST',
@@ -514,7 +544,7 @@
         .then(res => res.json())
         .then(data => {
           if (data.status === 'success' && data.records) {
-            records = data.records;
+            records = data.records.map(normalizeRecord);
             localStorage.setItem('baby_feed_records', JSON.stringify(records));
             renderDashboard();
           } else {
@@ -530,12 +560,16 @@
     function loadLocalRecords() {
       const localData = localStorage.getItem('baby_feed_records');
       if (localData) {
-        records = JSON.parse(localData);
+        try {
+          const parsed = JSON.parse(localData);
+          records = parsed.map(normalizeRecord);
+        } catch(e) {
+          records = [];
+        }
       }
       renderDashboard();
     }
 
-    // 提交新紀錄
     document.getElementById('feed-form').addEventListener('submit', function(e) {
       e.preventDefault();
       const timeVal = document.getElementById('feed-time').value;
@@ -609,7 +643,6 @@
         return;
       }
 
-      // 上一餐統計
       const latest = records[0];
       const lastTime = new Date(latest.timeStr.replace(/-/g, '/')).getTime();
       const diffMs = Date.now() - lastTime;
@@ -624,7 +657,6 @@
 
       document.getElementById('last-amount').innerText = latest.type === '親餵' ? '親餵' : `${latest.actualAmount} ml`;
 
-      // 篩選最近 12 小時
       const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
       const recentRecords = records.filter(r => {
         const t = new Date(r.timeStr.replace(/-/g, '/')).getTime();
