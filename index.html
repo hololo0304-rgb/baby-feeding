@@ -11,7 +11,6 @@
       --primary-pink: #FFB7B2;
       --primary-pink-hover: #FF9E99;
       --soft-blue: #E2F0CB;
-      --soft-purple: #E0C3FC;
       --text-main: #4A4A4A;
       --text-sub: #7D7D7D;
       --border-color: #FFE5D9;
@@ -19,265 +18,42 @@
       --radius: 16px;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; padding: 12px; min-height: 100vh; }
+    .app-container { width: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+    header { text-align: center; padding: 8px 0 2px 0; }
+    header h1 { font-size: 1.4rem; color: #5C6B73; font-weight: 700; }
 
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      display: flex;
-      justify-content: center;
-      padding: 12px;
-      min-height: 100vh;
-    }
+    .card { background: var(--card-bg); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
+    .summary-card { background: linear-gradient(135deg, #FFE5D9 0%, #FFF1E6 100%); display: flex; justify-content: space-around; align-items: center; text-align: center; border: none; padding: 14px; }
+    .summary-item h3 { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 4px; }
+    .summary-item .val { font-size: 1.4rem; font-weight: bold; color: #D8707C; }
 
-    .app-container {
-      width: 100%;
-      max-width: 480px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px; }
+    .time-input-group { display: flex; gap: 8px; }
+    input[type="datetime-local"], input[type="number"] { width: 100%; height: 46px; border: 2px solid var(--border-color); border-radius: 12px; padding: 0 10px; font-size: 0.95rem; outline: none; background-color: #FAF9F6; }
+    
+    .btn-now { flex-shrink: 0; padding: 0 12px; height: 46px; background-color: var(--soft-blue); border: none; border-radius: 12px; font-size: 0.85rem; font-weight: bold; color: #556B2F; cursor: pointer; }
+    .type-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .type-btn { height: 46px; border: 2px solid var(--border-color); background: #FFF; border-radius: 12px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+    .type-btn.active { background-color: var(--primary-pink); color: white; border-color: var(--primary-pink); }
+    .preset-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
+    .preset-btn { height: 38px; border: 1.5px solid var(--border-color); background-color: #FFF; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
 
-    header {
-      text-align: center;
-      padding: 8px 0 2px 0;
-    }
+    .btn-submit { width: 100%; height: 50px; background-color: var(--primary-pink); color: white; border: none; border-radius: 25px; font-size: 1.05rem; font-weight: bold; cursor: pointer; margin-top: 6px; }
 
-    header h1 {
-      font-size: 1.4rem;
-      color: #5C6B73;
-      font-weight: 700;
-    }
+    .action-btn-group { display: flex; gap: 10px; }
+    .btn-action { flex: 1; height: 42px; border-radius: 12px; border: 1.5px solid var(--border-color); background-color: #FFF; font-size: 0.85rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; text-decoration: none; }
+    .btn-action.left-btn { background-color: #F0F4C3; border-color: #DCE775; color: #33691E; }
+    .btn-action.right-btn { background-color: #E1F5FE; border-color: #81D4FA; color: #0277BD; }
 
-    .card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 16px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border-color);
-    }
-
-    .summary-card {
-      background: linear-gradient(135deg, #FFE5D9 0%, #FFF1E6 100%);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      text-align: center;
-      border: none;
-      padding: 14px;
-    }
-
-    .summary-item h3 {
-      font-size: 0.8rem;
-      color: var(--text-sub);
-      margin-bottom: 4px;
-    }
-
-    .summary-item .val {
-      font-size: 1.4rem;
-      font-weight: bold;
-      color: #D8707C;
-    }
-
-    .form-group {
-      margin-bottom: 12px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.88rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--text-main);
-    }
-
-    .time-input-group {
-      display: flex;
-      gap: 8px;
-    }
-
-    input[type="datetime-local"],
-    input[type="number"] {
-      width: 100%;
-      height: 46px;
-      border: 2px solid var(--border-color);
-      border-radius: 12px;
-      padding: 0 10px;
-      font-size: 0.95rem;
-      outline: none;
-      background-color: #FAF9F6;
-    }
-
-    input:focus {
-      border-color: var(--primary-pink);
-      background-color: #FFF;
-    }
-
-    .btn-now {
-      flex-shrink: 0;
-      padding: 0 12px;
-      height: 46px;
-      background-color: var(--soft-blue);
-      border: none;
-      border-radius: 12px;
-      font-size: 0.85rem;
-      font-weight: bold;
-      color: #556B2F;
-      cursor: pointer;
-    }
-
-    .type-selector {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .type-btn {
-      height: 46px;
-      border: 2px solid var(--border-color);
-      background: #FFF;
-      border-radius: 12px;
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: var(--text-main);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .type-btn.active {
-      background-color: var(--primary-pink);
-      color: white;
-      border-color: var(--primary-pink);
-    }
-
-    .preset-container {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .preset-btn {
-      height: 38px;
-      border: 1.5px solid var(--border-color);
-      background-color: #FFF;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .preset-btn.active {
-      background-color: #E3F2FD;
-      border-color: #90CAF9;
-      color: #1565C0;
-    }
-
-    .btn-submit {
-      width: 100%;
-      height: 50px;
-      background-color: var(--primary-pink);
-      color: white;
-      border: none;
-      border-radius: 25px;
-      font-size: 1.05rem;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(255, 183, 178, 0.4);
-      margin-top: 6px;
-    }
-
-    /* 左右雙按鈕區 (F 點) */
-    .action-btn-group {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .btn-action {
-      flex: 1;
-      height: 42px;
-      border-radius: 12px;
-      border: 1.5px solid var(--border-color);
-      background-color: #FFF;
-      font-size: 0.85rem;
-      font-weight: bold;
-      color: #4A4A4A;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-
-      /* 保留原版「歷史紀錄」連結效果，將 style 清除 */
-      text-decoration: none;
-    }
-
-    .btn-action.left-btn {
-      background-color: #F0F4C3;
-      border-color: #DCE775;
-      color: #33691E;
-    }
-
-    .btn-action.right-btn {
-      background-color: #E1F5FE;
-      border-color: #81D4FA;
-      color: #0277BD;
-    }
-
-    .list-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .list-header h2 {
-      font-size: 1rem;
-      color: var(--text-main);
-    }
-
-    .record-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .record-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 12px;
-      background-color: #FAF9F6;
-      border-radius: 10px;
-      border-left: 4px solid var(--primary-pink);
-    }
-
-    .record-info .time {
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
-    .record-info .detail {
-      font-size: 0.78rem;
-      color: var(--text-sub);
-    }
-
-    .record-amount {
-      font-size: 1.05rem;
-      font-weight: bold;
-      color: #D8707C;
-    }
+    .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .record-list { display: flex; flex-direction: column; gap: 8px; }
+    .record-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background-color: #FAF9F6; border-radius: 10px; border-left: 4px solid var(--primary-pink); }
+    .record-info .time { font-size: 0.9rem; font-weight: 600; }
+    .record-info .detail { font-size: 0.78rem; color: var(--text-sub); }
+    .record-amount { font-size: 1.05rem; font-weight: bold; color: #D8707C; }
   </style>
 </head>
 <body>
@@ -287,7 +63,6 @@
       <h1>🍼 寶寶餵奶雲端紀錄</h1>
     </header>
 
-    <!-- 頂部摘要 -->
     <div class="card summary-card">
       <div class="summary-item">
         <h3>距離上一餐已過</h3>
@@ -299,14 +74,12 @@
       </div>
     </div>
 
-    <!-- 主紀錄表單 -->
     <div class="card">
       <form id="feed-form">
         <div class="form-group">
           <label>⏰ 餵奶時間</label>
           <div class="time-input-group">
             <input type="datetime-local" id="feed-time" required>
-            <!-- A 需求：改為 +5 分鐘 -->
             <button type="button" class="btn-now" onclick="setFutureTime(5)">+5分鐘</button>
           </div>
         </div>
@@ -331,42 +104,35 @@
           <input type="number" id="feed-amount" placeholder="輸入奶量 ml" required>
         </div>
 
-        <button type="submit" class="btn-submit">✨ 紀錄這餐</button>
+        <button type="submit" class="btn-submit" id="submit-btn">✨ 紀錄這餐</button>
       </form>
     </div>
 
-    <!-- 左右雙按鈕 (F 需求) -->
     <div class="action-btn-group">
-      <!-- D 需求：連結至新頁面 history.html -->
-      <a href="history.html" target="_blank" class="btn-action left-btn">
-        📜 歷史紀錄
-      </a>
-      <!-- C 需求：補填/修改最近一次喝奶剩餘量，預設欄位留空 -->
-      <button type="button" class="btn-action right-btn" onclick="prepareUpdateLastRemaining()">
-        ✏️ 補填/修改前次剩餘量
-      </button>
+      <a href="history.html" class="btn-action left-btn">📜 歷史紀錄</a>
+      <button type="button" class="btn-action right-btn" onclick="prepareUpdateLastRemaining()">✏️ 補填/修改前次剩餘量</button>
     </div>
 
-    <!-- 最近 12 小時歷史紀錄 (E 需求) -->
     <div class="card">
       <div class="list-header">
         <h2>📜 最近 12 小時紀錄</h2>
       </div>
       <div id="record-list" class="record-list">
-        <div style="text-align:center; color:#999; padding: 10px;">載入中...</div>
+        <div style="text-align:center; color:#999; padding: 10px;">資料載入與同步中...</div>
       </div>
     </div>
   </div>
 
   <script>
+    // ⚠️ 請填入你的 GAS 發布 Web App 網址（若有使用雲端同步）
+    const GAS_URL = 'YOUR_GAS_WEB_APP_URL_HERE';
     let currentFeedType = '配方奶';
     let records = [];
 
     window.onload = function() {
-      setFutureTime(5); // 預設帶入 5 分鐘後的時間
-      loadRecords();
+      setFutureTime(5);
+      fetchCloudRecords(); // 開啟網頁時自動抓取最新資料
 
-      // 類型選擇鈕監聽
       document.querySelectorAll('.type-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
@@ -376,17 +142,14 @@
       });
     };
 
-    // A 需求：時間設為目前的 +N 分鐘
     function setFutureTime(minutesToAdd) {
       const now = new Date();
       now.setMinutes(now.getMinutes() + minutesToAdd);
-      
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const day = String(now.getDate()).padStart(2, '0');
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
-      
       document.getElementById('feed-time').value = `${year}-${month}-${day}T${hours}:${minutes}`;
     }
 
@@ -394,29 +157,45 @@
       document.getElementById('feed-amount').value = val;
     }
 
-    // C 需求：點擊「補填/修改前次剩餘量」，輸入欄位保持空白
     function prepareUpdateLastRemaining() {
       if (records.length === 0) {
-        alert('目前還沒有任何餵奶紀錄喔！');
+        alert('目前還沒有紀錄喔！');
         return;
       }
       setFutureTime(0);
-      document.getElementById('feed-amount').value = ''; // 預設留空
+      document.getElementById('feed-amount').value = '';
       document.getElementById('feed-amount').placeholder = '輸入前次剩餘奶量 ml';
       document.getElementById('feed-amount').focus();
     }
 
-    // 表單提交事件
+    // 開啟網頁自動從雲端與 LocalStorage 載入資料
+    function fetchCloudRecords() {
+      const localData = localStorage.getItem('baby_feed_records');
+      if (localData) {
+        records = JSON.parse(localData);
+        renderDashboard();
+      }
+
+      if (GAS_URL && GAS_URL !== 'YOUR_GAS_WEB_APP_URL_HERE') {
+        fetch(GAS_URL)
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'success' && data.records) {
+              records = data.records;
+              localStorage.setItem('baby_feed_records', JSON.stringify(records));
+              renderDashboard();
+            }
+          })
+          .catch(err => console.error('Cloud load error:', err));
+      }
+    }
+
     document.getElementById('feed-form').addEventListener('submit', function(e) {
       e.preventDefault();
-      
       const timeVal = document.getElementById('feed-time').value;
       const amountVal = parseInt(document.getElementById('feed-amount').value, 10);
 
-      if (isNaN(amountVal)) {
-        alert('請輸入正確的奶量');
-        return;
-      }
+      if (isNaN(amountVal)) return;
 
       const newRecord = {
         id: Date.now(),
@@ -427,29 +206,22 @@
       };
 
       records.unshift(newRecord);
-      saveRecords();
+      localStorage.setItem('baby_feed_records', JSON.stringify(records));
       renderDashboard();
 
-      // 重置欄位
+      // 上傳雲端
+      if (GAS_URL && GAS_URL !== 'YOUR_GAS_WEB_APP_URL_HERE') {
+        fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'add', record: newRecord })
+        });
+      }
+
       setFutureTime(5);
       document.getElementById('feed-amount').value = '';
-      document.getElementById('feed-amount').placeholder = '輸入奶量 ml';
       alert('已成功紀錄！');
     });
 
-    function saveRecords() {
-      localStorage.setItem('baby_feed_records', JSON.stringify(records));
-    }
-
-    function loadRecords() {
-      const data = localStorage.getItem('baby_feed_records');
-      if (data) {
-        records = JSON.parse(data);
-      }
-      renderDashboard();
-    }
-
-    // B 需求：僅在新增/修改時重新渲染畫面，不使用 setInterval 自動重整
     function renderDashboard() {
       if (records.length === 0) {
         document.getElementById('time-since-last').innerText = '--';
@@ -458,7 +230,6 @@
         return;
       }
 
-      // 1. 計算上一餐資訊
       const latest = records[0];
       const diffMs = Date.now() - latest.timestamp;
       if (diffMs > 0) {
@@ -470,7 +241,7 @@
       }
       document.getElementById('last-amount').innerText = `${latest.amount} ml`;
 
-      // 2. E 需求：僅顯示最近 12 小時內的紀錄
+      // 最近 12 小時
       const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
       const recentRecords = records.filter(r => r.timestamp >= twelveHoursAgo);
 
