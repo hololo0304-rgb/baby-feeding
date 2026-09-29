@@ -291,13 +291,24 @@
       border-left: 4px solid var(--primary-pink);
     }
 
-    .record-info .time {
-      font-size: 0.9rem;
-      font-weight: 600;
+    .record-item.formula { border-left-color: var(--primary-pink); }
+    .record-item.breast-bottle { border-left-color: #A8E6CF; }
+    .record-item.breast-direct { border-left-color: var(--soft-purple); }
+
+    .record-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .record-info .type-title {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #333;
     }
 
     .record-info .detail {
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       color: var(--text-sub);
     }
 
@@ -308,7 +319,7 @@
     }
 
     .record-amount {
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       font-weight: bold;
       color: #D8707C;
     }
@@ -485,15 +496,18 @@
       calculateActual();
     }
 
-    // 格式修復相容處理（防止 undefined）
+    // 完整資料標準化 (對齊 A~F 欄位)
     function normalizeRecord(r) {
-      const prep = Number(r.prepAmount !== undefined ? r.prepAmount : (r.amount !== undefined ? r.amount : (r.totalAmount || 0)));
-      const rest = Number(r.restAmount !== undefined ? r.restAmount : (r.leftAmount || 0));
-      const actual = Number(r.actualAmount !== undefined ? r.actualAmount : Math.max(0, prep - rest));
+      const prep = Number(r.prepAmount !== undefined ? r.prepAmount : (r.prep_amount || r.amount || r.totalAmount || 0));
+      const rest = Number(r.restAmount !== undefined ? r.restAmount : (r.rest_amount || r.leftAmount || 0));
+      let actual = Number(r.actualAmount !== undefined ? r.actualAmount : (r.actual_amount || 0));
+      if (!actual && prep > 0) {
+        actual = Math.max(0, prep - rest);
+      }
 
       return {
         id: String(r.id || Date.now()),
-        timeStr: r.timeStr || '',
+        timeStr: String(r.timeStr || r.time || ''),
         type: String(r.type || '配方奶'),
         prepAmount: prep,
         restAmount: rest,
@@ -505,7 +519,7 @@
       localStorage.removeItem('baby_feed_records');
       records = [];
       fetchCloudRecords();
-      alert('已清除本機暫存，重新同步雲端資料！');
+      alert('已清除暫存，重新讀取雲端！');
     }
 
     function prepareUpdateLastRemaining() {
@@ -552,7 +566,7 @@
           }
         })
         .catch(err => {
-          logDebug('雲端讀取失敗，使用本機快取: ' + err.toString());
+          logDebug('雲端讀取失敗: ' + err.toString());
           loadLocalRecords();
         });
     }
@@ -643,6 +657,7 @@
         return;
       }
 
+      // 上一餐時間差計算
       const latest = records[0];
       const lastTime = new Date(latest.timeStr.replace(/-/g, '/')).getTime();
       const diffMs = Date.now() - lastTime;
@@ -657,6 +672,7 @@
 
       document.getElementById('last-amount').innerText = latest.type === '親餵' ? '親餵' : `${latest.actualAmount} ml`;
 
+      // 篩選最近 12 小時
       const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
       const recentRecords = records.filter(r => {
         const t = new Date(r.timeStr.replace(/-/g, '/')).getTime();
@@ -673,13 +689,19 @@
 
       recentRecords.forEach(r => {
         const item = document.createElement('div');
-        item.className = 'record-item';
+        let cardClass = 'formula';
+        if (r.type === '瓶餵母奶') cardClass = 'breast-bottle';
+        if (r.type === '親餵') cardClass = 'breast-direct';
+
+        item.className = `record-item ${cardClass}`;
+        
         const displayAmt = r.type === '親餵' ? '親餵' : `${r.actualAmount} ml`;
         const subDetail = r.type === '親餵' ? '親餵' : `泡 ${r.prepAmount}ml / 剩 ${r.restAmount}ml`;
+        const timeShow = r.timeStr || '未知時間';
 
         item.innerHTML = `
           <div class="record-info">
-            <div class="time">${r.timeStr}</div>
+            <div class="type-title">⏰ ${timeShow}</div>
             <div class="detail">${r.type} (${subDetail})</div>
           </div>
           <div class="record-right">
