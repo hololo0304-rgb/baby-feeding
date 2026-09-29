@@ -126,165 +126,178 @@
     </div>
   </div>
 
-  <script>
-    // ⚠️ 請填入您的 GAS 發布 Web App 網址
-    const GAS_URL = 'YOUR_GAS_WEB_APP_URL_HERE';
-    let currentFeedType = '配方奶';
-    let records = [];
+<script>
+  // ⚠️ 請務必確認這裡貼上的就是你剛剛測試出 A 情況的完整 GAS 網址！
+  const GAS_URL = 'https://script.google.com/macros/s/你的部署ID/exec';
+  let currentFeedType = '配方奶';
+  let records = [];
 
-    window.onload = function() {
-      setFutureTime(5);
-      fetchCloudRecords();
+  window.onload = function() {
+    setFutureTime(5);
+    fetchCloudRecords();
 
-      document.querySelectorAll('.type-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-          this.classList.add('active');
-          currentFeedType = this.getAttribute('data-type');
-        });
+    document.querySelectorAll('.type-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentFeedType = this.getAttribute('data-type');
       });
-    };
+    });
+  };
 
-    function setFutureTime(minutesToAdd) {
-      const now = new Date();
-      now.setMinutes(now.getMinutes() + minutesToAdd);
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      document.getElementById('feed-time').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+  function setFutureTime(minutesToAdd) {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + minutesToAdd);
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('feed-time').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  function setPresetAmount(val) {
+    document.getElementById('feed-amount').value = val;
+  }
+
+  function prepareUpdateLastRemaining() {
+    if (records.length === 0) {
+      alert('目前還沒有紀錄喔！');
+      return;
     }
+    setFutureTime(0);
+    document.getElementById('feed-amount').value = '';
+    document.getElementById('feed-amount').placeholder = '輸入前次剩餘奶量 ml';
+    document.getElementById('feed-amount').focus();
+  }
 
-    function setPresetAmount(val) {
-      document.getElementById('feed-amount').value = val;
-    }
-
-    function prepareUpdateLastRemaining() {
-      if (records.length === 0) {
-        alert('目前還沒有紀錄喔！');
-        return;
-      }
-      setFutureTime(0);
-      document.getElementById('feed-amount').value = '';
-      document.getElementById('feed-amount').placeholder = '輸入前次剩餘奶量 ml';
-      document.getElementById('feed-amount').focus();
-    }
-
-    function fetchCloudRecords() {
+  // 強制從雲端獲取最新歷史紀錄並更新
+  function fetchCloudRecords() {
+    if (GAS_URL && !GAS_URL.includes('YOUR_GAS_WEB_APP_URL_HERE')) {
+      fetch(GAS_URL)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success' && data.records) {
+            records = data.records;
+            // 寫入本地端，讓兩邊保持同步
+            localStorage.setItem('baby_feed_records', JSON.stringify(records));
+            renderDashboard();
+          }
+        })
+        .catch(err => {
+          console.error('Cloud load error:', err);
+          // 若沒網路才讀取 LocalStorage 快取
+          const localData = localStorage.getItem('baby_feed_records');
+          if (localData) {
+            records = JSON.parse(localData);
+            renderDashboard();
+          }
+        });
+    } else {
       const localData = localStorage.getItem('baby_feed_records');
       if (localData) {
         records = JSON.parse(localData);
         renderDashboard();
       }
-
-      if (GAS_URL && GAS_URL !== 'https://script.google.com/macros/s/AKfycbw8dPU0GDoC5_GEM1VFeYNQXGtXtAHNrzyph_W-kqFlpcEFRZ2qf77DyidRfrAxkwjQXA/exec') {
-        fetch(GAS_URL)
-          .then(res => res.json())
-          .then(data => {
-            if (data.status === 'success' && data.records) {
-              records = data.records;
-              localStorage.setItem('baby_feed_records', JSON.stringify(records));
-              renderDashboard();
-            }
-          })
-          .catch(err => console.error('Cloud load error:', err));
-      }
     }
+  }
 
-    document.getElementById('feed-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const timeVal = document.getElementById('feed-time').value;
-      const amountVal = parseInt(document.getElementById('feed-amount').value, 10);
+  document.getElementById('feed-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const timeVal = document.getElementById('feed-time').value;
+    const amountVal = parseInt(document.getElementById('feed-amount').value, 10);
 
-      if (isNaN(amountVal)) return;
+    if (isNaN(amountVal)) return;
 
-      const newRecord = {
-        id: Date.now(),
-        timestamp: new Date(timeVal).getTime(),
-        timeStr: timeVal.replace('T', ' '),
-        type: currentFeedType,
-        amount: amountVal
-      };
+    const formattedTimeStr = timeVal.replace('T', ' ');
+    const newRecord = {
+      id: String(Date.now()),
+      timestamp: new Date(timeVal).getTime(),
+      timeStr: formattedTimeStr,
+      type: currentFeedType,
+      amount: amountVal,
+      totalAmount: amountVal,
+      leftAmount: 0
+    };
 
-      records.unshift(newRecord);
-      localStorage.setItem('baby_feed_records', JSON.stringify(records));
-      renderDashboard();
+    records.unshift(newRecord);
+    localStorage.setItem('baby_feed_records', JSON.stringify(records));
+    renderDashboard();
 
-      if (GAS_URL && GAS_URL !== 'YOUR_GAS_WEB_APP_URL_HERE') {
-        fetch(GAS_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'add', record: newRecord })
-        });
-      }
-
-      setFutureTime(5);
-      document.getElementById('feed-amount').value = '';
-      alert('已成功紀錄！');
-    });
-
-    function deleteRecord(id) {
-      if (!confirm('確定要刪除這筆紀錄嗎？')) return;
-      
-      records = records.filter(r => r.id !== id);
-      localStorage.setItem('baby_feed_records', JSON.stringify(records));
-      renderDashboard();
-
-      if (GAS_URL && GAS_URL !== 'YOUR_GAS_WEB_APP_URL_HERE') {
-        fetch(GAS_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'delete', id: id })
-        });
-      }
-    }
-
-    function renderDashboard() {
-      if (records.length === 0) {
-        document.getElementById('time-since-last').innerText = '--';
-        document.getElementById('last-amount').innerText = '--';
-        document.getElementById('record-list').innerHTML = '<div style="text-align:center; color:#999; padding: 10px;">暫無紀錄</div>';
-        return;
-      }
-
-      const latest = records[0];
-      const diffMs = Date.now() - latest.timestamp;
-      if (diffMs > 0) {
-        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-        document.getElementById('time-since-last').innerText = `${diffHrs}小時 ${diffMins}分`;
-      } else {
-        document.getElementById('time-since-last').innerText = '剛紀錄';
-      }
-      document.getElementById('last-amount').innerText = `${latest.amount} ml`;
-
-      // 篩選最近 12 小時
-      const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
-      const recentRecords = records.filter(r => r.timestamp >= twelveHoursAgo);
-
-      const listEl = document.getElementById('record-list');
-      listEl.innerHTML = '';
-
-      if (recentRecords.length === 0) {
-        listEl.innerHTML = '<div style="text-align:center; color:#999; padding: 10px;">最近 12 小時內無紀錄</div>';
-        return;
-      }
-
-      recentRecords.forEach(r => {
-        const item = document.createElement('div');
-        item.className = 'record-item';
-        item.innerHTML = `
-          <div class="record-info">
-            <div class="time">${r.timeStr.substring(5)}</div>
-            <div class="detail">${r.type}</div>
-          </div>
-          <div class="record-right">
-            <div class="record-amount">${r.amount} ml</div>
-            <button class="btn-del" onclick="deleteRecord(${r.id})" title="刪除">🗑️</button>
-          </div>
-        `;
-        listEl.appendChild(item);
+    if (GAS_URL && !GAS_URL.includes('YOUR_GAS_WEB_APP_URL_HERE')) {
+      fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'add', record: newRecord })
       });
     }
-  </script>
+
+    setFutureTime(5);
+    document.getElementById('feed-amount').value = '';
+    alert('已成功紀錄！');
+  });
+
+  function deleteRecord(id) {
+    if (!confirm('確定要刪除這筆紀錄嗎？')) return;
+    
+    records = records.filter(r => String(r.id) !== String(id));
+    localStorage.setItem('baby_feed_records', JSON.stringify(records));
+    renderDashboard();
+
+    if (GAS_URL && !GAS_URL.includes('YOUR_GAS_WEB_APP_URL_HERE')) {
+      fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'delete', id: id })
+      });
+    }
+  }
+
+  function renderDashboard() {
+    if (records.length === 0) {
+      document.getElementById('time-since-last').innerText = '--';
+      document.getElementById('last-amount').innerText = '--';
+      document.getElementById('record-list').innerHTML = '<div style="text-align:center; color:#999; padding: 10px;">暫無紀錄</div>';
+      return;
+    }
+
+    const latest = records[0];
+    const diffMs = Date.now() - latest.timestamp;
+    if (diffMs > 0) {
+      const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      document.getElementById('time-since-last').innerText = `${diffHrs}小時 ${diffMins}分`;
+    } else {
+      document.getElementById('time-since-last').innerText = '剛紀錄';
+    }
+    document.getElementById('last-amount').innerText = `${latest.amount} ml`;
+
+    // 篩選最近 12 小時
+    const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
+    const recentRecords = records.filter(r => r.timestamp >= twelveHoursAgo);
+
+    const listEl = document.getElementById('record-list');
+    listEl.innerHTML = '';
+
+    if (recentRecords.length === 0) {
+      listEl.innerHTML = '<div style="text-align:center; color:#999; padding: 10px;">最近 12 小時內無紀錄</div>';
+      return;
+    }
+
+    recentRecords.forEach(r => {
+      const item = document.createElement('div');
+      item.className = 'record-item';
+      item.innerHTML = `
+        <div class="record-info">
+          <div class="time">${r.timeStr.substring(5)}</div>
+          <div class="detail">${r.type}</div>
+        </div>
+        <div class="record-right">
+          <div class="record-amount">${r.amount} ml</div>
+          <button class="btn-del" onclick="deleteRecord('${r.id}')" title="刪除">🗑️</button>
+        </div>
+      `;
+      listEl.appendChild(item);
+    });
+  }
+</script>
 </body>
 </html>
