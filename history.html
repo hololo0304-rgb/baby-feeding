@@ -10,117 +10,36 @@
       --card-bg: #FFFFFF;
       --border-color: #FFE5D9;
       --text-main: #333333;
-      --text-sub: #666666;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); padding: 12px; max-width: 500px; margin: 0 auto; }
 
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      padding: 12px;
-      max-width: 500px;
-      margin: 0 auto;
-    }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 14px 0; border-bottom: 2px dashed var(--border-color); margin-bottom: 12px; }
+    header h1 { font-size: 1.2rem; color: #5C6B73; }
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0 14px 0;
-      border-bottom: 2px dashed var(--border-color);
-      margin-bottom: 12px;
-    }
+    /* 返回首頁按鈕 */
+    .btn-back { display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 42px; background-color: #FFE5D9; color: #D8707C; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: bold; text-decoration: none; margin-bottom: 12px; }
 
-    header h1 {
-      font-size: 1.2rem;
-      color: #5C6B73;
-    }
-
-    .count-badge {
-      background-color: #FFE5D9;
-      color: #D8707C;
-      font-size: 0.8rem;
-      font-weight: bold;
-      padding: 4px 10px;
-      border-radius: 12px;
-    }
-
-    /* D 需求：扁平化、緊湊風格清單 */
-    .compact-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .compact-item {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 8px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-    }
-
-    .item-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .type-tag {
-      font-size: 0.75rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      background-color: #F0F4C3;
-      color: #33691E;
-      font-weight: bold;
-    }
-
-    .time-str {
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: #444;
-    }
-
-    .item-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .amount-val {
-      font-size: 0.95rem;
-      font-weight: bold;
-      color: #D8707C;
-    }
-
-    .btn-del {
-      background: none;
-      border: none;
-      color: #CCC;
-      font-size: 0.9rem;
-      cursor: pointer;
-      padding: 2px 4px;
-    }
-
-    .btn-del:active {
-      color: #FF5252;
-    }
+    .count-badge { background-color: #FFE5D9; color: #D8707C; font-size: 0.8rem; font-weight: bold; padding: 4px 10px; border-radius: 12px; }
+    .compact-list { display: flex; flex-direction: column; gap: 6px; }
+    .compact-item { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; }
+    .item-left { display: flex; align-items: center; gap: 8px; }
+    .type-tag { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; background-color: #F0F4C3; color: #33691E; font-weight: bold; }
+    .time-str { font-size: 0.85rem; font-weight: 600; color: #444; }
+    .item-right { display: flex; align-items: center; gap: 8px; }
+    .amount-val { font-size: 0.92rem; font-weight: bold; color: #D8707C; }
+    .btn-del { background: none; border: none; color: #CCC; font-size: 0.9rem; cursor: pointer; padding: 2px 4px; }
   </style>
 </head>
 <body>
 
+  <!-- 返回原頁面按鈕 -->
+  <a href="index.html" class="btn-back">⬅️ 返回首頁紀錄頁面</a>
+
   <header>
     <h1>📜 完整歷史紀錄</h1>
-    <div id="total-count" class="count-badge">共 0 筆</div>
+    <div id="total-count" class="count-badge">載入中...</div>
   </header>
 
   <main id="history-container" class="compact-list">
@@ -128,15 +47,33 @@
   </main>
 
   <script>
+    const GAS_URL = 'YOUR_GAS_WEB_APP_URL_HERE';
+
     window.onload = function() {
-      renderHistory();
+      loadHistory();
     };
 
-    function renderHistory() {
-      const container = document.getElementById('history-container');
-      const data = localStorage.getItem('baby_feed_records');
-      const records = data ? JSON.parse(data) : [];
+    function loadHistory() {
+      // 1. 先讀 LocalStorage
+      const localData = localStorage.getItem('baby_feed_records');
+      let records = localData ? JSON.parse(localData) : [];
+      renderHistory(records);
 
+      // 2. 自動向雲端抓取最新完整歷史
+      if (GAS_URL && GAS_URL !== 'YOUR_GAS_WEB_APP_URL_HERE') {
+        fetch(GAS_URL)
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'success' && data.records) {
+              localStorage.setItem('baby_feed_records', JSON.stringify(data.records));
+              renderHistory(data.records);
+            }
+          });
+      }
+    }
+
+    function renderHistory(records) {
+      const container = document.getElementById('history-container');
       document.getElementById('total-count').innerText = `共 ${records.length} 筆`;
 
       if (records.length === 0) {
@@ -145,7 +82,7 @@
       }
 
       container.innerHTML = '';
-      records.forEach((r, index) => {
+      records.forEach(r => {
         const item = document.createElement('div');
         item.className = 'compact-item';
         item.innerHTML = `
@@ -155,7 +92,7 @@
           </div>
           <div class="item-right">
             <span class="amount-val">${r.amount} ml</span>
-            <button class="btn-del" onclick="deleteRecord(${r.id})" title="刪除">🗑️</button>
+            <button class="btn-del" onclick="deleteRecord(${r.id})">🗑️</button>
           </div>
         `;
         container.appendChild(item);
@@ -165,13 +102,18 @@
     function deleteRecord(id) {
       if (!confirm('確定要刪除這筆紀錄嗎？')) return;
       
-      const data = localStorage.getItem('baby_feed_records');
-      if (!data) return;
-
-      let records = JSON.parse(data);
+      const localData = localStorage.getItem('baby_feed_records');
+      let records = localData ? JSON.parse(localData) : [];
       records = records.filter(r => r.id !== id);
       localStorage.setItem('baby_feed_records', JSON.stringify(records));
-      renderHistory();
+      renderHistory(records);
+
+      if (GAS_URL && GAS_URL !== 'YOUR_GAS_WEB_APP_URL_HERE') {
+        fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'delete', id: id })
+        });
+      }
     }
   </script>
 </body>
