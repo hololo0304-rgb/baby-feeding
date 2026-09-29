@@ -2,147 +2,112 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>餵奶歷史紀錄完整清單</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>餵奶歷史紀錄</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root {
-      --bg-color: #FFF9F5;
-      --card-bg: #FFFFFF;
-      --border-color: #FFE5D9;
-      --text-main: #333333;
+    body {
+      background-color: #FFF5F5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-main); padding: 12px; max-width: 500px; margin: 0 auto; }
-
-    header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 14px 0; border-bottom: 2px dashed var(--border-color); margin-bottom: 12px; }
-    header h1 { font-size: 1.2rem; color: #5C6B73; }
-
-    .btn-back { display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 42px; background-color: #FFE5D9; color: #D8707C; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: bold; text-decoration: none; margin-bottom: 12px; }
-
-    .count-badge { background-color: #FFE5D9; color: #D8707C; font-size: 0.8rem; font-weight: bold; padding: 4px 10px; border-radius: 12px; }
-    .compact-list { display: flex; flex-direction: column; gap: 6px; }
-    .compact-item { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; }
-    .item-left { display: flex; align-items: center; gap: 8px; }
-    .type-tag { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; background-color: #F0F4C3; color: #33691E; font-weight: bold; }
-    .time-str { font-size: 0.85rem; font-weight: 600; color: #444; }
-    .item-right { display: flex; align-items: center; gap: 8px; }
-    .amount-val { font-size: 0.92rem; font-weight: bold; color: #D8707C; }
-    .btn-del { background: none; border: none; color: #CCC; font-size: 0.9rem; cursor: pointer; padding: 2px 4px; }
-    .btn-del:active { color: #FF5252; }
   </style>
 </head>
-<body>
+<body class="p-4 max-w-md mx-auto min-h-screen text-gray-700">
 
-  <a href="index.html" class="btn-back">⬅️ 返回首頁紀錄頁面</a>
+  <!-- 標題與返回 -->
+  <div class="flex items-center justify-between mb-4">
+    <a href="index.html" class="bg-white border border-pink-200 px-4 py-2 rounded-2xl text-sm font-bold text-pink-400 hover:bg-pink-50">
+      ← 返回新增
+    </a>
+    <h1 class="font-bold text-lg text-gray-800">📜 全部歷史紀錄</h1>
+    <div class="w-16"></div>
+  </div>
 
-  <header>
-    <h1>📜 完整歷史紀錄</h1>
-    <div id="total-count" class="count-badge">載入中...</div>
-  </header>
+  <!-- 今日統計 -->
+  <div class="bg-white rounded-3xl p-4 shadow-sm border border-red-50 mb-4 flex justify-around text-center">
+    <div>
+      <div class="text-xs text-gray-400 font-semibold mb-1">今日總喝量</div>
+      <div id="todayTotal" class="text-xl font-bold text-pink-500">0 ml</div>
+    </div>
+    <div class="border-r border-gray-100"></div>
+    <div>
+      <div class="text-xs text-gray-400 font-semibold mb-1">今日總餐數</div>
+      <div id="todayCount" class="text-xl font-bold text-blue-500">0 餐</div>
+    </div>
+  </div>
 
-  <main id="history-container" class="compact-list">
-    <div style="text-align:center; color:#999; padding: 20px;">資料載入中...</div>
-  </main>
+  <!-- 紀錄列表 -->
+  <div class="bg-white rounded-3xl p-5 shadow-sm border border-red-50">
+    <div id="historyList" class="space-y-3">
+      <div class="text-center py-8 text-gray-400">載入歷史紀錄中...</div>
+    </div>
+  </div>
 
   <script>
-    // ⚠️ 請填入您的 GAS 發布 Web App 網址
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbw8dPU0GDoC5_GEM1VFeYNQXGtXtAHNrzyph_W-kqFlpcEFRZ2qf77DyidRfrAxkwjQXA/exec';
+    // 請替換為您的 GAS Web App 網址
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbz_REPLACE_WITH_YOUR_GAS_ID/exec';
 
-    window.onload = function() {
-      loadHistory();
-    };
+    window.onload = fetchHistory;
 
-    function normalizeRecord(r) {
-      let timeStr = r.timeStr || r.time || r['時間'] || '';
-      let type = r.type || r['方式'] || '配方奶';
-      let prepared = Number(r.prepared || r.prepAmount || 0);
-      let remaining = Number(r.remaining || r.amount || 0);
-      let consumed = Number(r.consumed || r.actualAmount || 0);
-
-      if (!consumed && prepared > 0) {
-        consumed = Math.max(0, prepared - remaining);
-      } else if (!consumed) {
-        consumed = remaining;
-      }
-
-      if (timeStr && timeStr.length >= 16) {
-        timeStr = timeStr.replace('T', ' ').substring(0, 16);
-      }
-
-      return {
-        id: r.id || Date.now(),
-        timestamp: r.timestamp || (timeStr ? new Date(timeStr).getTime() : Date.now()),
-        timeStr: timeStr,
-        type: type,
-        consumed: consumed
-      };
-    }
-
-    function loadHistory() {
-      const localData = localStorage.getItem('baby_feed_records');
-      let records = [];
-      if (localData) {
-        try {
-          records = JSON.parse(localData).map(normalizeRecord);
-          renderHistory(records);
-        } catch(e) {}
-      }
-
-      if (GAS_URL && GAS_URL !== 'YOUR_GAS_WEB_APP_URL_HERE') {
-        fetch(GAS_URL)
-          .then(res => res.json())
-          .then(data => {
-            if (data.status === 'success' && data.records) {
-              records = data.records.map(normalizeRecord);
-              localStorage.setItem('baby_feed_records', JSON.stringify(records));
-              renderHistory(records);
-            }
-          });
+    async function fetchHistory() {
+      try {
+        const res = await fetch(GAS_URL);
+        const data = await res.json();
+        if (data.status === 'success') {
+          renderList(data.records);
+          calculateToday(data.records);
+        }
+      } catch (err) {
+        document.getElementById('historyList').innerHTML = '<div class="text-center py-4 text-red-400">無法載入紀錄</div>';
       }
     }
 
-    function renderHistory(records) {
-      const container = document.getElementById('history-container');
-      document.getElementById('total-count').innerText = `共 ${records.length} 筆`;
+    function calculateToday(records) {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayRecords = records.filter(r => r.timeStr.startsWith(todayStr));
+      
+      const totalVolume = todayRecords.reduce((sum, r) => sum + Number(r.actualAmount || 0), 0);
+      
+      document.getElementById('todayTotal').innerText = `${totalVolume} ml`;
+      document.getElementById('todayCount').innerText = `${todayRecords.length} 餐`;
+    }
 
-      if (records.length === 0) {
-        container.innerHTML = '<div style="text-align:center; color:#999; padding: 30px;">尚無歷史紀錄</div>';
+    function renderList(records) {
+      const listEl = document.getElementById('historyList');
+      if (!records || records.length === 0) {
+        listEl.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">無歷史紀錄</div>';
         return;
       }
 
-      container.innerHTML = '';
-      records.forEach(r => {
-        const item = document.createElement('div');
-        item.className = 'compact-item';
-        item.innerHTML = `
-          <div class="item-left">
-            <span class="type-tag">${r.type}</span>
-            <span class="time-str">${r.timeStr}</span>
+      listEl.innerHTML = records.map(r => `
+        <div class="bg-red-50/40 rounded-2xl p-3 flex justify-between items-center border border-red-100">
+          <div>
+            <div class="font-bold text-gray-700 text-sm">⏰ ${r.type}</div>
+            <div class="text-xs text-gray-400 mt-0.5">泡 ${r.prepAmount} ml | 剩 ${r.restAmount} ml</div>
+            <div class="text-xs text-gray-500 mt-0.5">${r.timeStr}</div>
           </div>
-          <div class="item-right">
-            <span class="amount-val">${r.consumed} ml</span>
-            <button class="btn-del" onclick="deleteRecord(${r.id})" title="刪除">🗑️</button>
+          <div class="flex items-center gap-3">
+            <span class="font-bold text-pink-500 text-base">${r.actualAmount} ml</span>
+            <button onclick="deleteRecord('${r.id}')" class="text-gray-300 hover:text-red-400 p-1">🗑️</button>
           </div>
-        `;
-        container.appendChild(item);
-      });
+        </div>
+      `).join('');
     }
 
-    function deleteRecord(id) {
+    async function deleteRecord(id) {
       if (!confirm('確定要刪除這筆紀錄嗎？')) return;
-      
-      const localData = localStorage.getItem('baby_feed_records');
-      let records = localData ? JSON.parse(localData) : [];
-      records = records.filter(r => r.id !== id);
-      localStorage.setItem('baby_feed_records', JSON.stringify(records));
-      renderHistory(records);
 
-      if (GAS_URL && GAS_URL !== 'YOUR_GAS_WEB_APP_URL_HERE') {
-        fetch(GAS_URL, {
+      try {
+        await fetch(GAS_URL, {
           method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'delete', id: id })
         });
+        alert('已刪除');
+        fetchHistory();
+      } catch (err) {
+        alert('刪除失敗：' + err.message);
       }
     }
   </script>
