@@ -1,51 +1,131 @@
-<!-- 餵奶時間 -->
-<div class="mb-5">
-  <label class="font-bold flex items-center gap-1 text-gray-700 mb-2">
-    ⏰ 餵奶時間
-  </label>
-  <div class="flex gap-2">
-    <input type="datetime-local" id="timeInput" class="flex-1 border border-pink-200 bg-pink-50/30 rounded-2xl p-3 text-blue-500 font-semibold focus:outline-none focus:ring-2 focus:ring-pink-300">
-    <button type="button" onclick="addMinutes(5)" class="bg-emerald-100 text-emerald-800 px-4 rounded-2xl font-semibold text-sm hover:bg-emerald-200 active:scale-95 transition">
-      +5分鐘
+body {
+  font-family: 'Zen Maru Gothic', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #FFF9F5;
+  color: #4A4A4A;
+}
+
+.btn-type.active {
+  background-color: #FBCFE8;
+  border-color: #F472B6;
+  color: #9D174D;
+  font-weight: 700;
+}
+
+.btn-amount.active {
+  background-color: #DBEAFE;
+  border-color: #60A5FA;
+  color: #1E40AF;
+  font-weight: 700;
+}
+
+/* iOS Input 隱藏原生箭頭與背景美化 */
+input[type="datetime-local"], input[type="number"] {
+  -webkit-appearance: none;
+}
+
+
+<!-- 頁頭標題 -->
+<header class="text-center py-2">
+  <h1 class="text-2xl font-black text-rose-400 tracking-wider flex items-center justify-center gap-2">
+    <span>🍼</span> 寶寶餵奶雲端紀錄
+  </h1>
+</header>
+
+<!-- 摘要數據卡片 -->
+<div class="bg-gradient-to-r from-pink-100 via-rose-50 to-amber-100 rounded-3xl p-4 shadow-sm border border-pink-200/60 flex justify-around items-center text-center">
+  <div>
+    <div class="text-xs font-bold text-gray-500 mb-1">距離上一餐已過</div>
+    <div class="text-xl font-black text-rose-500" id="time-since-last">--</div>
+  </div>
+  <div class="h-8 w-[1px] bg-pink-200"></div>
+  <div>
+    <div class="text-xs font-bold text-gray-500 mb-1">上一餐實際喝量</div>
+    <div class="text-xl font-black text-rose-500"><span id="last-amount">--</span> <span class="text-xs">ml</span></div>
+  </div>
+</div>
+
+<!-- 主要輸入表單卡片 -->
+<div class="bg-white rounded-3xl p-5 shadow-sm border border-pink-100/80">
+  <form id="feed-form" onsubmit="event.preventDefault();">
+    
+    <!-- ⏰ 餵奶時間 -->
+    <div class="mb-4">
+      <label class="font-bold flex items-center gap-1 text-gray-700 text-sm mb-1.5">
+        ⏰ 餵奶時間
+      </label>
+      <div class="flex gap-2">
+        <input type="datetime-local" id="timeInput" required class="flex-1 border-2 border-pink-100 bg-pink-50/30 rounded-2xl p-2.5 text-rose-600 font-bold text-sm focus:outline-none focus:border-pink-300">
+        <button type="button" onclick="addMinutes(5)" class="bg-emerald-100 text-emerald-800 px-3 py-2.5 rounded-2xl font-bold text-xs hover:bg-emerald-200 active:scale-95 transition flex-shrink-0">
+          +5分鐘
+        </button>
+      </div>
+    </div>
+
+    <!-- 🍼 餵奶方式 -->
+    <div class="mb-4">
+      <label class="font-bold flex items-center gap-1 text-gray-700 text-sm mb-1.5">
+        🍼 餵奶方式
+      </label>
+      <div class="grid grid-cols-3 gap-2">
+        <button type="button" class="btn-type active border-2 border-pink-100 py-2.5 rounded-2xl font-bold text-sm text-gray-600 bg-white active:scale-95 transition" onclick="setType(this, '配方奶')">配方奶</button>
+        <button type="button" class="btn-type border-2 border-pink-100 py-2.5 rounded-2xl font-bold text-sm text-gray-600 bg-white active:scale-95 transition" onclick="setType(this, '瓶餵母奶')">瓶餵母奶</button>
+        <button type="button" class="btn-type border-2 border-pink-100 py-2.5 rounded-2xl font-bold text-sm text-gray-600 bg-white active:scale-95 transition" onclick="setType(this, '親餵')">親餵</button>
+      </div>
+    </div>
+
+    <!-- 🥛 準備/泡奶量 -->
+    <div class="mb-4">
+      <label class="font-bold flex items-center gap-1 text-gray-700 text-sm mb-1.5">
+        🥛 準備/泡奶量 (ml)
+      </label>
+      <div class="grid grid-cols-4 gap-2 mb-2">
+        <button type="button" class="btn-amount border-2 border-pink-100 py-1.5 rounded-xl text-blue-500 font-bold text-xs bg-white hover:bg-blue-50 transition" onclick="setPrepAmount(this, 60)">60</button>
+        <button type="button" class="btn-amount border-2 border-pink-100 py-1.5 rounded-xl text-blue-500 font-bold text-xs bg-white hover:bg-blue-50 transition" onclick="setPrepAmount(this, 90)">90</button>
+        <button type="button" class="btn-amount border-2 border-pink-100 py-1.5 rounded-xl text-blue-500 font-bold text-xs bg-white hover:bg-blue-50 transition" onclick="setPrepAmount(this, 120)">120</button>
+        <button type="button" class="btn-amount border-2 border-pink-100 py-1.5 rounded-xl text-blue-500 font-bold text-xs bg-white hover:bg-blue-50 transition" onclick="setPrepAmount(this, 150)">150</button>
+      </div>
+      <input type="number" id="prepInput" placeholder="輸入奶量 ml" required class="w-full border-2 border-pink-100 bg-pink-50/20 rounded-2xl p-2.5 text-gray-700 font-bold focus:outline-none focus:border-pink-300">
+    </div>
+
+    <!-- 🥣 剩餘奶量 -->
+    <div class="mb-5">
+      <label class="font-bold flex items-center justify-between text-gray-700 text-sm mb-1.5">
+        <span>🥣 剩餘奶量 (ml)</span>
+        <span class="text-xs text-gray-400 font-normal">沒剩下請填 0</span>
+      </label>
+      <input type="number" id="restInput" value="0" placeholder="0" required class="w-full border-2 border-pink-100 bg-pink-50/20 rounded-2xl p-2.5 text-gray-700 font-bold focus:outline-none focus:border-pink-300">
+    </div>
+
+    <!-- 提交按鈕 -->
+    <button type="button" onclick="saveRecord()" id="submitBtn" class="w-full bg-rose-400 hover:bg-rose-500 active:scale-98 text-white font-black py-3.5 rounded-2xl shadow-sm text-base transition flex items-center justify-center gap-2">
+      ✨ 記錄這餐
     </button>
+  </form>
+</div>
+
+<!-- 快捷操作按鈕組 -->
+<div class="grid grid-cols-2 gap-2.5">
+  <a href="history.html" class="bg-lime-100 hover:bg-lime-200 text-lime-900 border border-lime-300/60 font-bold py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-1 transition shadow-sm">
+    📜 歷史紀錄
+  </a>
+  <button type="button" onclick="prepareUpdateLastRemaining()" class="bg-sky-100 hover:bg-sky-200 text-sky-900 border border-sky-300/60 font-bold py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-1 transition shadow-sm">
+    ✏️ 補填/修改前次剩餘量
+  </button>
+</div>
+
+<!-- 最近 12 小時紀錄卡片列表 -->
+<div class="bg-white rounded-3xl p-5 shadow-sm border border-pink-100/80">
+  <div class="flex justify-between items-center mb-3">
+    <h2 class="font-bold text-gray-700 text-sm flex items-center gap-1">
+      <span>📜</span> 最近 12 小時紀錄
+    </h2>
+    <span id="sync-status" class="text-[10px] bg-pink-50 text-pink-500 px-2 py-0.5 rounded-full border border-pink-200">同步中...</span>
   </div>
-</div>
 
-<!-- 餵奶方式 -->
-<div class="mb-5">
-  <label class="font-bold flex items-center gap-1 text-gray-700 mb-2">
-    🍼 餵奶方式
-  </label>
-  <div class="grid grid-cols-3 gap-2">
-    <button type="button" class="btn-type active border border-pink-200 py-3 rounded-2xl font-bold text-gray-600 bg-white" onclick="setType(this, '配方奶')">配方奶</button>
-    <button type="button" class="btn-type border border-pink-200 py-3 rounded-2xl font-bold text-gray-600 bg-white" onclick="setType(this, '瓶餵母奶')">瓶餵母奶</button>
-    <button type="button" class="btn-type border border-pink-200 py-3 rounded-2xl font-bold text-gray-600 bg-white" onclick="setType(this, '親餵')">親餵</button>
+  <div id="record-list" class="space-y-2">
+    <div class="text-center text-gray-400 py-6 text-sm">資料讀取中...</div>
   </div>
-</div>
 
-<!-- 準備/泡奶量 -->
-<div class="mb-5">
-  <label class="font-bold flex items-center gap-1 text-gray-700 mb-2">
-    🥛 準備/泡奶量 (ml)
-  </label>
-  <div class="grid grid-cols-4 gap-2 mb-2">
-    <button type="button" class="btn-amount border border-pink-200 py-2 rounded-xl text-blue-500 font-bold text-sm bg-white" onclick="setPrepAmount(this, 60)">60</button>
-    <button type="button" class="btn-amount border border-pink-200 py-2 rounded-xl text-blue-500 font-bold text-sm bg-white" onclick="setPrepAmount(this, 90)">90</button>
-    <button type="button" class="btn-amount border border-pink-200 py-2 rounded-xl text-blue-500 font-bold text-sm bg-white" onclick="setPrepAmount(this, 120)">120</button>
-    <button type="button" class="btn-amount border border-pink-200 py-2 rounded-xl text-blue-500 font-bold text-sm bg-white" onclick="setPrepAmount(this, 150)">150</button>
-  </div>
-  <input type="number" id="prepInput" placeholder="輸入奶量 ml" class="w-full border border-pink-200 bg-pink-50/20 rounded-2xl p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-300">
+  <!-- 除錯訊息顯示區 (必要時開啓) -->
+  <div id="debug-log" class="hidden mt-4 text-[11px] text-red-500 bg-red-50 p-2.5 rounded-xl border border-red-200 break-all space-y-1"></div>
 </div>
-
-<!-- 剩餘奶量 -->
-<div class="mb-6">
-  <label class="font-bold flex items-center gap-1 text-gray-700 mb-2">
-    🥣 剩餘奶量 (ml) <span class="text-xs text-gray-400 font-normal">(沒剩下請填 0)</span>
-  </label>
-  <input type="number" id="restInput" value="0" placeholder="0" class="w-full border border-pink-200 bg-pink-50/20 rounded-2xl p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-300">
-</div>
-
-<!-- 提交按鈕 -->
-<button type="button" onclick="saveRecord()" id="submitBtn" class="w-full bg-pink-300 hover:bg-pink-400 active:scale-98 text-white font-bold py-4 rounded-2xl shadow-sm text-lg transition flex items-center justify-center gap-2">
-  ✨ 記錄這餐
-</button>
