@@ -1,163 +1,391 @@
-console.log("app.js 已載入");
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-const recordsContainer = document.getElementById("recordsContainer");
-const saveBtn = document.getElementById("saveBtn");
+<title>寶寶餵奶紀錄</title>
 
-document.addEventListener("DOMContentLoaded", () => {
+<style>
 
-    console.log("DOM 已載入");
+*{
+    box-sizing:border-box;
+}
 
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+body{
+    margin:0;
+    padding:15px;
+    background:#FFF8F7;
+    font-family:"Microsoft JhengHei",sans-serif;
+    color:#333;
+}
 
-    document.getElementById("feedTime").value =
-        now.toISOString().slice(0,16);
+.container{
+    max-width:700px;
+    margin:auto;
+}
 
-    loadRecords();
+h1{
+    text-align:center;
+    color:#D97986;
+    margin-bottom:20px;
+}
 
+.summary{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:20px;
+}
+
+.summary-card{
+    background:#FDEEEA;
+    border-radius:20px;
+    padding:18px;
+    text-align:center;
+}
+
+.summary-title{
+    color:#888;
+    font-size:16px;
+    margin-bottom:10px;
+}
+
+.summary-value{
+    color:#D97986;
+    font-size:38px;
+    font-weight:bold;
+}
+
+.main-card{
+    background:white;
+    border-radius:25px;
+    padding:20px;
+    border:2px solid #F7DED8;
+    box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+
+.section-title{
+
+    font-size:20px;
+    font-weight:bold;
+    margin:20px 0 10px;
+}
+
+.time-row{
+    display:flex;
+    gap:10px;
+}
+
+.time-display{
+    flex:1;
+    border:2px solid #F7DED8;
+    border-radius:18px;
+    padding:18px;
+    text-align:center;
+    font-size:28px;
+    color:#1976D2;
+    font-weight:bold;
+}
+
+.add-btn{
+
+    width:110px;
+    background:#DDE8B3;
+    border:none;
+    border-radius:18px;
+    font-size:24px;
+    font-weight:bold;
+    color:#557030;
+}
+
+.type-buttons{
+    display:flex;
+    gap:10px;
+}
+
+.type-btn{
+
+    flex:1;
+    padding:18px;
+    border-radius:18px;
+    border:2px solid #F7DED8;
+    background:white;
+    font-size:20px;
+    font-weight:bold;
+}
+
+.type-btn.active{
+    background:#F5B4B0;
+    color:white;
+    border:none;
+}
+
+.milk-grid{
+
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.milk-btn{
+
+    padding:15px;
+    border-radius:15px;
+    border:2px solid #F7DED8;
+    background:white;
+    color:#1976D2;
+    font-size:28px;
+    font-weight:bold;
+}
+
+.milk-btn.active{
+    background:#FDEEEA;
+}
+
+input{
+
+    width:100%;
+    padding:18px;
+    border-radius:18px;
+    border:2px solid #F7DED8;
+    font-size:22px;
+}
+
+.save-btn{
+
+    width:100%;
+    margin-top:25px;
+    padding:22px;
+    background:#F5B4B0;
+    color:white;
+    border:none;
+    border-radius:35px;
+    font-size:30px;
+    font-weight:bold;
+}
+
+.record-card{
+
+    margin-top:20px;
+    background:white;
+    border-radius:20px;
+    padding:20px;
+    border:2px solid #F7DED8;
+}
+
+#recordsContainer{
+
+    margin-top:10px;
+}
+
+.record{
+
+    padding:12px;
+    border-bottom:1px solid #eee;
+}
+
+.record:last-child{
+    border-bottom:none;
+}
+
+@media(max-width:480px){
+
+    .summary-value{
+        font-size:30px;
+    }
+
+    .time-display{
+        font-size:22px;
+    }
+
+    .milk-btn{
+        font-size:22px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🍼 寶寶餵奶紀錄</h1>
+
+<div class="summary">
+
+    <div class="summary-card">
+        <div class="summary-title">
+            距離上一餐已過
+        </div>
+
+        <div class="summary-value" id="lastInterval">
+            --h --m
+        </div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-title">
+            上一餐實際喝量
+        </div>
+
+        <div class="summary-value" id="lastDrinkAmount">
+            -- ml
+        </div>
+    </div>
+
+</div>
+
+<div class="main-card">
+
+    <div class="section-title">
+        ⏰ 餵奶時間
+    </div>
+
+    <div class="time-row">
+
+        <div
+            class="time-display"
+            id="displayTime">
+            讀取中...
+        </div>
+
+        <button
+            class="add-btn"
+            type="button"
+            id="add5min">
+            +5分鐘
+        </button>
+
+    </div>
+
+    <input
+        type="hidden"
+        id="feedTime">
+
+    <div class="section-title">
+        🍼 餵奶方式
+    </div>
+
+    <div class="type-buttons">
+
+        <button
+            class="type-btn active"
+            data-type="配方奶">
+            配方奶
+        </button>
+
+        <button
+            class="type-btn"
+            data-type="瓶餵母奶">
+            瓶餵母奶
+        </button>
+
+        <button
+            class="type-btn"
+            data-type="親餵">
+            親餵
+        </button>
+
+    </div>
+
+    <input
+        type="hidden"
+        id="feedType"
+        value="配方奶">
+
+    <div class="section-title">
+        🥛 準備奶量（ml）
+    </div>
+
+    <div class="milk-grid">
+
+        <button class="milk-btn" data-ml="90">90</button>
+        <button class="milk-btn" data-ml="120">120</button>
+        <button class="milk-btn" data-ml="150">150</button>
+        <button class="milk-btn" data-ml="180">180</button>
+
+    </div>
+
+    <input
+        type="number"
+        id="preparedAmount"
+        placeholder="自訂奶量">
+
+    <div class="section-title">
+        🍼 剩餘量（ml）
+    </div>
+
+    <input
+        type="number"
+        id="remainingAmount"
+        placeholder="輸入剩餘量">
+
+    <button
+        class="save-btn"
+        id="saveBtn">
+        ✨ 紀錄這餐
+    </button>
+
+</div>
+
+<div class="record-card">
+
+    <h2>📜 最近餵奶紀錄</h2>
+
+    <div id="recordsContainer">
+        載入中...
+    </div>
+
+</div>
+
+</div>
+
+<script>
+
+document.querySelectorAll(".type-btn")
+.forEach(btn=>{
+
+    btn.addEventListener("click",()=>{
+
+        document
+        .querySelectorAll(".type-btn")
+        .forEach(b=>b.classList.remove("active"));
+
+        btn.classList.add("active");
+
+        document
+        .getElementById("feedType")
+        .value =
+        btn.dataset.type;
+    });
 });
 
-saveBtn.addEventListener("click", saveRecord);
+document.querySelectorAll(".milk-btn")
+.forEach(btn=>{
 
-async function loadRecords(){
+    btn.addEventListener("click",()=>{
 
-    try{
+        document
+        .getElementById("preparedAmount")
+        .value =
+        btn.dataset.ml;
 
-        console.log("開始載入歷史紀錄");
+        document
+        .querySelectorAll(".milk-btn")
+        .forEach(b=>b.classList.remove("active"));
 
-        const response = await fetch(
-            `${window.CONFIG.GAS_URL}?action=get`
-        );
+        btn.classList.add("active");
+    });
+});
 
-        const data = await response.json();
+</script>
 
-        console.log("取得資料成功", data);
+<!-- 保持原順序 -->
+<script src="config.js"></script>
+<script src="app.js"></script>
 
-        localStorage.setItem(
-            "babyFeedRecords",
-            JSON.stringify(data)
-        );
-
-        renderRecords(data);
-
-    }
-    catch(error){
-
-        console.error("載入失敗", error);
-
-        const cache =
-            localStorage.getItem("babyFeedRecords");
-
-        if(cache){
-
-            console.log("使用本機快取");
-
-            renderRecords(JSON.parse(cache));
-        }
-
-        else{
-
-            recordsContainer.innerHTML =
-                "<p>資料載入失敗</p>";
-        }
-    }
-}
-
-function renderRecords(records){
-
-    if(!records || records.length === 0){
-
-        recordsContainer.innerHTML =
-            "<p>目前沒有紀錄</p>";
-
-        return;
-    }
-
-    recordsContainer.innerHTML = records.map(item => {
-
-        return `
-        <div class="record">
-            <div><strong>${item.feedTime}</strong></div>
-            <div>${item.feedType}</div>
-            <div>
-                準備量：${item.preparedAmount} ml
-            </div>
-            <div>
-                剩餘量：${item.remainingAmount} ml
-            </div>
-            <div>
-                實際飲用：
-                ${(item.preparedAmount||0)-(item.remainingAmount||0)} ml
-            </div>
-        </div>
-        `;
-
-    }).join("");
-
-}
-
-async function saveRecord(){
-
-    try{
-
-        const payload = {
-
-            feedTime:
-                document.getElementById("feedTime").value,
-
-            feedType:
-                document.getElementById("feedType").value,
-
-            preparedAmount:
-                Number(
-                    document.getElementById(
-                        "preparedAmount"
-                    ).value
-                ),
-
-            remainingAmount:
-                Number(
-                    document.getElementById(
-                        "remainingAmount"
-                    ).value
-                )
-        };
-
-        console.log("準備送出", payload);
-
-        await fetch(window.CONFIG.GAS_URL, {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "text/plain"
-            },
-
-            body: JSON.stringify(payload)
-
-        });
-
-        console.log("寫入成功");
-
-        alert("✅ 紀錄成功");
-
-        document.getElementById(
-            "preparedAmount"
-        ).value = "";
-
-        document.getElementById(
-            "remainingAmount"
-        ).value = "";
-
-        await loadRecords();
-
-    }
-    catch(error){
-
-        console.error("寫入失敗", error);
-
-        alert(
-            "❌ 寫入失敗，請打開 F12 查看錯誤訊息"
-        );
-    }
-}
+</body>
+</html>
