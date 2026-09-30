@@ -2,573 +2,380 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>寶寶餵奶雲端紀錄</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>寶寶餵奶紀錄</title>
   <style>
     :root {
-      --bg-color: #FFF9F5;
+      --primary: #4A90E2;
+      --bg: #F5F7FA;
       --card-bg: #FFFFFF;
-      --primary-pink: #FFB7B2;
-      --primary-pink-hover: #FF9E99;
-      --soft-blue: #E2F0CB;
-      --soft-yellow: #FFF1C5;
-      --soft-purple: #E0C3FC;
-      --text-main: #4A4A4A;
-      --text-sub: #7D7D7D;
-      --border-color: #FFE5D9;
-      --shadow: 0 4px 15px rgba(255, 183, 178, 0.18);
-      --radius: 16px;
+      --text: #333333;
+      --border: #E1E6EB;
     }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
-
     body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
       display: flex;
       justify-content: center;
-      padding: 12px;
-      min-height: 100vh;
     }
-
-    .app-container {
+    .container {
       width: 100%;
-      max-width: 440px;
-      margin: 0 auto;
+      max-width: 480px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
     }
-
-    header {
-      text-align: center;
-      padding: 6px 0 2px 0;
-    }
-
-    header h1 {
-      font-size: 1.4rem;
-      color: #5C6B73;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-
     .card {
       background: var(--card-bg);
-      border-radius: var(--radius);
+      border-radius: 12px;
       padding: 16px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
-
-    .summary-card {
-      background: linear-gradient(135deg, #FFE5D9 0%, #FFF1E6 100%);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
+    /* 摘要卡片 */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
       text-align: center;
-      border: none;
-      padding: 14px;
     }
+    .summary-item .title { font-size: 0.85rem; color: #666; margin-bottom: 4px; }
+    .summary-item .value { font-size: 1.25rem; font-weight: bold; color: var(--primary); }
 
-    .summary-item h3 {
-      font-size: 0.8rem;
-      color: var(--text-sub);
-      margin-bottom: 4px;
-    }
-
-    .summary-item .val {
-      font-size: 1.3rem;
-      font-weight: bold;
-      color: #D8707C;
-    }
-
-    .form-group {
-      margin-bottom: 12px;
-    }
-
-    .form-group label {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--text-main);
-    }
-
-    .time-container {
-      display: flex;
-      gap: 8px;
-    }
-
-    .time-box {
+    /* 表單元件 */
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 6px; }
+    .flex-row { display: flex; gap: 8px; align-items: center; }
+    input, select {
       flex: 1;
-      height: 46px;
-      border: 2px solid var(--border-color);
-      border-radius: 12px;
-      padding: 0 10px;
-      font-size: 0.95rem;
-      outline: none;
-      background-color: #FAF9F6;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #0288D1;
-      font-weight: bold;
-      position: relative;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
     }
-
-    .time-picker {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      opacity: 0;
-      cursor: pointer;
-    }
-
-    .btn-now {
-      flex-shrink: 0;
-      padding: 0 12px;
-      height: 46px;
-      background-color: var(--soft-blue);
+    .btn-btn-sm {
+      padding: 10px 12px;
+      background: #E8F2FF;
+      color: var(--primary);
       border: none;
-      border-radius: 12px;
-      font-size: 0.85rem;
+      border-radius: 8px;
       font-weight: bold;
-      color: #556B2F;
       cursor: pointer;
     }
-
-    .type-selector {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .type-btn {
-      height: 46px;
-      border: 2px solid var(--border-color);
-      background: #FFF;
-      border-radius: 12px;
-      font-size: 0.88rem;
-      font-weight: 600;
+    .btn-group { display: flex; gap: 8px; }
+    .btn-option {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 8px;
       cursor: pointer;
-      color: var(--text-main);
+      text-align: center;
     }
-
-    .type-btn.active {
-      background-color: var(--primary-pink);
-      color: white;
-      border-color: var(--primary-pink);
+    .btn-option.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
     }
-
-    .preset-container {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .preset-btn {
-      height: 38px;
-      border: 1.5px solid var(--border-color);
-      background-color: #FFF;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      font-weight: 600;
+    .quick-ml-btns { display: flex; gap: 6px; margin-top: 6px; }
+    .quick-ml-btns button {
+      flex: 1;
+      padding: 6px;
+      background: #F0F4F8;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
     }
-
-    input[type="number"] {
-      width: 100%;
-      height: 46px;
-      border: 2px solid var(--border-color);
-      border-radius: 12px;
-      padding: 0 10px;
-      font-size: 0.95rem;
-      outline: none;
-      background-color: #FAF9F6;
-    }
-
     .btn-submit {
       width: 100%;
-      height: 50px;
-      background-color: var(--primary-pink);
+      padding: 14px;
+      background: #27AE60;
       color: white;
       border: none;
-      border-radius: 25px;
-      font-size: 1.05rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
       font-weight: bold;
       cursor: pointer;
-      margin-top: 6px;
-      box-shadow: 0 4px 10px rgba(255, 183, 178, 0.4);
     }
 
-    .action-btn-group {
-      display: flex;
-      gap: 10px;
-    }
-
-    .btn-action {
-      flex: 1;
-      height: 42px;
-      border-radius: 12px;
-      border: 1.5px solid var(--border-color);
-      background-color: #FFF;
-      font-size: 0.85rem;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
+    /* 雙導覽/操作按鈕 */
+    .nav-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-secondary {
+      padding: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 8px;
+      font-weight: 600;
+      text-align: center;
       text-decoration: none;
+      color: var(--text);
+      cursor: pointer;
     }
 
-    .btn-action.left-btn { background-color: #F0F4C3; border-color: #DCE775; color: #33691E; }
-    .btn-action.right-btn { background-color: #E1F5FE; border-color: #81D4FA; color: #0277BD; }
-
-    .list-header {
-      font-size: 1rem;
-      font-weight: bold;
-      margin-bottom: 10px;
-      color: var(--text-main);
-    }
-
-    .record-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
+    /* 清單 */
     .record-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 12px;
-      background-color: #FAF9F6;
-      border-radius: 10px;
-      border-left: 4px solid var(--primary-pink);
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
     }
-
-    .record-info .time-type {
-      font-size: 0.9rem;
-      font-weight: bold;
-      color: #333;
+    .record-item:last-child { border-bottom: none; }
+    .tag {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #E0E0E0;
+      margin-right: 6px;
     }
-
-    .record-info .detail {
-      font-size: 0.78rem;
-      color: var(--text-sub);
-    }
-
-    .record-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .record-amount {
-      font-size: 1.1rem;
-      font-weight: bold;
-      color: #D8707C;
-    }
-
     .btn-del {
       background: none;
       border: none;
-      color: #CCC;
-      font-size: 0.9rem;
+      font-size: 1.1rem;
       cursor: pointer;
     }
   </style>
 </head>
 <body>
-
-  <div class="app-container">
-    <header>
-      <h1>🍼 寶寶餵奶雲端紀錄</h1>
-    </header>
-
-    <div class="card summary-card">
+  <div class="container">
+    <!-- 頂部摘要卡片 -->
+    <div class="card summary-grid">
       <div class="summary-item">
-        <h3>距離上一餐已過</h3>
-        <div class="val" id="time-since-last">--</div>
+        <div class="title">距離上一餐</div>
+        <div class="value" id="timeAgo">--</div>
       </div>
       <div class="summary-item">
-        <h3>上一餐實際喝量</h3>
-        <div class="val" id="last-amount">--</div>
+        <div class="title">上一餐喝量</div>
+        <div class="value" id="lastAmount">-- ml</div>
       </div>
     </div>
 
+    <!-- 餵奶紀錄表單 -->
     <div class="card">
-      <form id="feed-form">
-        <div class="form-group">
-          <label>⏰ 餵奶時間</label>
-          <div class="time-container">
-            <div class="time-box" id="time-display">
-              <span id="time-text">--</span>
-              <input type="datetime-local" id="feed-time" class="time-picker" onchange="updateTimePicker()">
-            </div>
-            <button type="button" class="btn-now" onclick="addMinutes(5)">+5分鐘</button>
-          </div>
+      <div class="form-group">
+        <label>餵奶時間</label>
+        <div class="flex-row">
+          <input type="datetime-local" id="feedTime">
+          <button type="button" class="btn-btn-sm" id="btnPlus5">+5分鐘</button>
         </div>
-
-        <div class="form-group">
-          <label>🍼 餵奶方式</label>
-          <div class="type-selector">
-            <button type="button" class="type-btn active" data-type="配方奶">配方奶</button>
-            <button type="button" class="type-btn" data-type="瓶餵母奶">瓶餵母奶</button>
-            <button type="button" class="type-btn" data-type="親餵">親餵</button>
-          </div>
-        </div>
-
-        <div class="form-group" id="amount-group">
-          <label>🥛 準備/泡奶量 (ml)</label>
-          <div class="preset-container">
-            <button type="button" class="preset-btn" onclick="setPresetAmount(60)">60</button>
-            <button type="button" class="preset-btn" onclick="setPresetAmount(90)">90</button>
-            <button type="button" class="preset-btn" onclick="setPresetAmount(120)">120</button>
-            <button type="button" class="preset-btn" onclick="setPresetAmount(150)">150</button>
-          </div>
-          <input type="number" id="feed-amount" placeholder="輸入奶量 ml" inputmode="numeric">
-        </div>
-
-        <button type="submit" class="btn-submit">✨ 紀錄這餐</button>
-      </form>
-    </div>
-
-    <div class="action-btn-group">
-      <a href="history.html" class="btn-action left-btn">📜 歷史紀錄</a>
-      <button type="button" class="btn-action right-btn" onclick="modifyLastRest()">✏️ 補填/修改前次剩餘量</button>
-    </div>
-
-    <div class="card">
-      <div class="list-header">📜 最近 12 小時紀錄</div>
-      <div id="record-list" class="record-list">
-        <div style="text-align:center; color:#999; padding: 10px;">資料載入中...</div>
       </div>
+
+      <div class="form-group">
+        <label>餵奶方式</label>
+        <div class="btn-group" id="typeGroup">
+          <div class="btn-option active" data-val="配方奶">配方奶</div>
+          <div class="btn-option" data-val="瓶餵母奶">瓶餵母奶</div>
+          <div class="btn-option" data-val="親餵">親餵</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>準備/泡奶量 (ml)</label>
+        <input type="number" id="preparedAmount" placeholder="輸入 ml 數">
+        <div class="quick-ml-btns">
+          <button type="button" onclick="setPrepared(60)">60</button>
+          <button type="button" onclick="setPrepared(90)">90</button>
+          <button type="button" onclick="setPrepared(120)">120</button>
+          <button type="button" onclick="setPrepared(150)">150</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>剩餘量 (ml)</label>
+        <input type="number" id="leftoverAmount" placeholder="0">
+      </div>
+
+      <button type="button" class="btn-submit" id="btnSubmit">紀錄這餐</button>
+    </div>
+
+    <!-- 功能操作雙按鈕 -->
+    <div class="nav-actions">
+      <a href="history.html" class="btn-secondary">📜 歷史紀錄</a>
+      <button type="button" class="btn-secondary" id="btnEditLast">✏️ 補填/修改前次剩餘量</button>
+    </div>
+
+    <!-- 最近 12 小時紀錄清單 -->
+    <div class="card">
+      <h3 style="margin-top:0; font-size:1rem;">最近 12 小時紀錄</h3>
+      <div id="recentList">讀取中...</div>
     </div>
   </div>
 
   <script>
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbw8dPU0GDoC5_GEM1VFeYNQXGtXtAHNrzyph_W-kqFlpcEFRZ2qf77DyidRfrAxkwjQXA/exec';
-    
-    let currentFeedType = '配方奶';
-    let records = [];
-    let selectedDate = new Date();
+    const GAS_URL = "YOUR_GAS_WEB_APP_URL"; // 替換為實際 GAS URL
+    let currentEditId = null;
 
-    window.onload = function() {
-      addMinutes(0);
-      setupTypeSelector();
-      fetchCloudRecords();
-    };
+    // 初始化頁面
+    document.addEventListener("DOMContentLoaded", () => {
+      setNowTime();
+      initTypeSelector();
+      loadRecords();
 
-    function setupTypeSelector() {
-      document.querySelectorAll('.type-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-          this.classList.add('active');
-          currentFeedType = this.getAttribute('data-type');
-          document.getElementById('amount-group').style.display = (currentFeedType === '親餵') ? 'none' : 'block';
+      document.getElementById('btnPlus5').addEventListener('click', add5Mins);
+      document.getElementById('btnSubmit').addEventListener('click', handleSubmit);
+      document.getElementById('btnEditLast').addEventListener('click', prepareEditLast);
+    });
+
+    function setNowTime() {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      document.getElementById('feedTime').value = now.toISOString().slice(0,16);
+    }
+
+    function add5Mins() {
+      const input = document.getElementById('feedTime');
+      const cur = input.value ? new Date(input.value) : new Date();
+      cur.setMinutes(cur.getMinutes() + 5);
+      cur.setMinutes(cur.getMinutes() - cur.getTimezoneOffset());
+      input.value = cur.toISOString().slice(0,16);
+    }
+
+    function initTypeSelector() {
+      document.querySelectorAll('#typeGroup .btn-option').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('#typeGroup .btn-option').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
         });
       });
     }
 
-    function addMinutes(mins) {
-      selectedDate.setMinutes(selectedDate.getMinutes() + mins);
-      const y = selectedDate.getFullYear();
-      const m = String(selectedDate.getMonth() + 1).padStart(2, '0');
-      const d = String(selectedDate.getDate()).padStart(2, '0');
-      const hh = String(selectedDate.getHours()).padStart(2, '0');
-      const mm = String(selectedDate.getMinutes()).padStart(2, '0');
-
-      document.getElementById('time-text').innerText = `${y}年${selectedDate.getMonth() + 1}月${selectedDate.getDate()}日 ${hh}:${mm}`;
-      document.getElementById('feed-time').value = `${y}-${m}-${d}T${hh}:${mm}`;
+    function setPrepared(val) {
+      document.getElementById('preparedAmount').value = val;
     }
 
-    function updateTimePicker() {
-      const val = document.getElementById('feed-time').value;
-      if (val) {
-        selectedDate = new Date(val);
-        addMinutes(0);
+    function getLocalRecords() {
+      return JSON.parse(localStorage.getItem('baby_records') || '[]');
+    }
+
+    function saveLocalRecords(data) {
+      localStorage.setItem('baby_records', JSON.stringify(data));
+      renderUI();
+    }
+
+    async function loadRecords() {
+      renderUI(); // 優先渲染本地端快照
+      try {
+        const res = await fetch(GAS_URL);
+        const json = await res.json();
+        if (json.status === 'success') {
+          saveLocalRecords(json.data);
+        }
+      } catch (err) {
+        console.error("雲端讀取失敗，使用快照資料", err);
       }
     }
 
-    function setPresetAmount(val) {
-      document.getElementById('feed-amount').value = val;
-    }
-
-    function fetchCloudRecords() {
-      if (!GAS_URL) return loadLocalRecords();
-      fetch(GAS_URL, { redirect: 'follow' })
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === 'success' && data.records) {
-            records = data.records;
-            localStorage.setItem('baby_feed_records', JSON.stringify(records));
-            renderDashboard();
-          } else {
-            loadLocalRecords();
-          }
-        })
-        .catch(() => loadLocalRecords());
-    }
-
-    function loadLocalRecords() {
-      const local = localStorage.getItem('baby_feed_records');
-      if (local) {
-        try { records = JSON.parse(local); } catch(e) { records = []; }
-      }
-      renderDashboard();
-    }
-
-    document.getElementById('feed-form').addEventListener('submit', function(e) {
-      e.preventDefault();
+    function renderUI() {
+      const records = getLocalRecords().sort((a,b) => new Date(b.time) - new Date(a.time));
       
-      const y = selectedDate.getFullYear();
-      const m = String(selectedDate.getMonth() + 1).padStart(2, '0');
-      const d = String(selectedDate.getDate()).padStart(2, '0');
-      const hh = String(selectedDate.getHours()).padStart(2, '0');
-      const mm = String(selectedDate.getMinutes()).padStart(2, '0');
-      const timeStr = `${y}-${m}-${d} ${hh}:${mm}`;
-
-      let prepAmt = 0;
-      if (currentFeedType !== '親餵') {
-        prepAmt = parseInt(document.getElementById('feed-amount').value, 10);
-        if (isNaN(prepAmt)) {
-          alert('請輸入準備/泡奶量 ml');
-          return;
-        }
+      // 更新頂部卡片
+      if (records.length > 0) {
+        const last = records[0];
+        const diffMs = new Date() - new Date(last.time);
+        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+        const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        document.getElementById('timeAgo').innerText = `${hours}時${mins}分`;
+        document.getElementById('lastAmount').innerText = `${last.actual} ml`;
+      } else {
+        document.getElementById('timeAgo').innerText = "--";
+        document.getElementById('lastAmount').innerText = "-- ml";
       }
 
-      const newRecord = {
-        id: String(Date.now()),
-        timeStr: timeStr,
-        type: currentFeedType,
-        prepAmount: prepAmt,
-        restAmount: 0,
-        actualAmount: prepAmt
-      };
-
-      records.unshift(newRecord);
-      localStorage.setItem('baby_feed_records', JSON.stringify(records));
-      renderDashboard();
-
-      if (GAS_URL) {
-        fetch(GAS_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'add', record: newRecord })
-        });
-      }
-
-      document.getElementById('feed-amount').value = '';
-      alert('已成功紀錄！');
-    });
-
-    function modifyLastRest() {
-      if (records.length === 0) return alert('尚無紀錄！');
-      const last = records[0];
-      const input = prompt(`請輸入上一餐 (${last.type}) 的剩餘奶量 ml：`, last.restAmount || 0);
-      if (input !== null) {
-        const rest = parseInt(input, 10) || 0;
-        last.restAmount = rest;
-        last.actualAmount = Math.max(0, (last.prepAmount || 0) - rest);
-
-        localStorage.setItem('baby_feed_records', JSON.stringify(records));
-        renderDashboard();
-
-        if (GAS_URL) {
-          fetch(GAS_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'add', record: last })
-          });
-        }
-      }
-    }
-
-    function deleteRecord(id) {
-      if (!confirm('確定刪除此紀錄？')) return;
-      records = records.filter(r => String(r.id) !== String(id));
-      localStorage.setItem('baby_feed_records', JSON.stringify(records));
-      renderDashboard();
-
-      if (GAS_URL) {
-        fetch(GAS_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'delete', id: id })
-        });
-      }
-    }
-
-    function renderDashboard() {
-      const listEl = document.getElementById('record-list');
-      listEl.innerHTML = '';
-
-      if (records.length === 0) {
-        document.getElementById('time-since-last').innerText = '--';
-        document.getElementById('last-amount').innerText = '--';
-        listEl.innerHTML = '<div style="text-align:center; color:#999; padding:10px;">暫無紀錄</div>';
+      // 最近 12 小時清單
+      const now = new Date();
+      const twelveHoursAgo = new Date(now.getTime() - (12 * 60 * 60 * 1000));
+      const recent = records.filter(r => new Date(r.time) >= twelveHoursAgo);
+      
+      const listContainer = document.getElementById('recentList');
+      if (recent.length === 0) {
+        listContainer.innerHTML = '<div style="color:#888; font-size:0.9rem;">最近 12 小時無紀錄</div>';
         return;
       }
 
-      // 上一餐卡片資訊
-      const latest = records[0];
-      const lastTime = new Date(latest.timeStr.replace(/-/g, '/')).getTime();
-      const diffMs = Date.now() - lastTime;
-      if (!isNaN(diffMs) && diffMs > 0) {
-        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-        document.getElementById('time-since-last').innerText = `${diffHrs}h ${diffMins}m`;
-      } else {
-        document.getElementById('time-since-last').innerText = '剛紀錄';
-      }
-      document.getElementById('last-amount').innerText = latest.type === '親餵' ? '親餵' : `${latest.actualAmount} ml`;
-
-      // 12小時列表渲染
-      const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
-      const recent = records.filter(r => {
-        const t = new Date(r.timeStr.replace(/-/g, '/')).getTime();
-        return t >= twelveHoursAgo || isNaN(t);
-      });
-
-      recent.forEach(r => {
-        const item = document.createElement('div');
-        item.className = 'record-item';
-
-        const prep = r.prepAmount !== undefined ? r.prepAmount : (r.amount || 0);
-        const rest = r.restAmount !== undefined ? r.restAmount : 0;
-        const actual = r.actualAmount !== undefined ? r.actualAmount : (prep - rest);
-
-        const displayRight = r.type === '親餵' ? '親餵' : `${actual} ml`;
-        const subDetail = r.type === '親餵' ? '親餵' : `泡 ${prep}ml / 剩 ${rest}ml`;
-
-        item.innerHTML = `
-          <div class="record-info">
-            <div class="time-type">⏰ ${r.timeStr} (${r.type})</div>
-            <div class="detail">${subDetail}</div>
+      listContainer.innerHTML = recent.map(r => `
+        <div class="record-item">
+          <div>
+            <span class="tag">${r.type}</span>
+            <strong>${r.time.replace('T', ' ')}</strong>
           </div>
-          <div class="record-right">
-            <div class="record-amount">${displayRight}</div>
+          <div>
+            <span>${r.actual} ml</span>
             <button class="btn-del" onclick="deleteRecord('${r.id}')">🗑️</button>
           </div>
-        `;
-        listEl.appendChild(item);
+        </div>
+      `).join('');
+    }
+
+    async function handleSubmit() {
+      const time = document.getElementById('feedTime').value;
+      const type = document.querySelector('#typeGroup .active').dataset.val;
+      const prepared = Number(document.getElementById('preparedAmount').value) || 0;
+      const leftover = Number(document.getElementById('leftoverAmount').value) || 0;
+
+      if (!time) return alert("請選擇餵奶時間");
+
+      const record = {
+        id: currentEditId || 'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        time,
+        type,
+        prepared,
+        leftover,
+        actual: Math.max(0, prepared - leftover)
+      };
+
+      // 快照儲存
+      let records = getLocalRecords();
+      if (currentEditId) {
+        records = records.map(r => r.id === currentEditId ? record : r);
+      } else {
+        records.push(record);
+      }
+      saveLocalRecords(records);
+
+      // 清空修改狀態與表單
+      currentEditId = null;
+      document.getElementById('leftoverAmount').value = '';
+      setNowTime();
+
+      // 雲端同步
+      fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'CREATE_OR_UPDATE', data: record })
+      }).catch(err => console.error("雲端同步失敗", err));
+    }
+
+    function prepareEditLast() {
+      const records = getLocalRecords().sort((a,b) => new Date(b.time) - new Date(a.time));
+      if (records.length === 0) return alert("目前沒有前次紀錄可供修改");
+
+      const last = records[0];
+      currentEditId = last.id;
+
+      // 設為目前時間，其餘資訊載入但保持剩餘量空白
+      setNowTime();
+      document.getElementById('preparedAmount').value = last.prepared;
+      document.getElementById('leftoverAmount').value = ''; // 保持空白方便補填
+      
+      // 切換餵奶方式按鈕 active 狀態
+      document.querySelectorAll('#typeGroup .btn-option').forEach(b => {
+        b.classList.toggle('active', b.dataset.val === last.type);
       });
+
+      alert("已載入前次紀錄資訊，請輸入補填的剩餘量後點擊「紀錄這餐」完成更新。");
+    }
+
+    async function deleteRecord(id) {
+      if (!confirm("確定要刪除這筆紀錄嗎？")) return;
+      
+      let records = getLocalRecords().filter(r => r.id !== id);
+      saveLocalRecords(records);
+
+      fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'DELETE', id })
+      }).catch(err => console.error("雲端刪除失敗", err));
     }
   </script>
 </body>
