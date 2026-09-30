@@ -2,47 +2,129 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>寶寶餵奶紀錄</title>
 
 <style>
+
 body{
-    font-family: Arial, sans-serif;
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 15px;
+    font-family:"Microsoft JhengHei",sans-serif;
+    background:#FFF8F7;
+    margin:0;
+    padding:15px;
+    color:#444;
 }
 
-.card{
-    border:1px solid #ddd;
-    border-radius:10px;
-    padding:15px;
+.container{
+    max-width:700px;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+    color:#D97986;
+}
+
+.summary{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
     margin-bottom:15px;
 }
 
-label{
-    display:block;
-    margin-top:10px;
+.card{
+    background:white;
+    border-radius:20px;
+    padding:15px;
+    box-shadow:0 2px 5px rgba(0,0,0,.08);
 }
 
-input,select,button{
-    width:100%;
-    padding:10px;
-    margin-top:5px;
-    box-sizing:border-box;
+.summary-title{
+    font-size:14px;
+    color:#888;
+}
+
+.summary-value{
+    font-size:32px;
+    color:#D97986;
+    font-weight:bold;
+    text-align:center;
+}
+
+#displayTime{
+    text-align:center;
+    font-size:24px;
+    color:#1976D2;
+    font-weight:bold;
+    margin:15px 0;
+}
+
+.action-row{
+    display:flex;
+    gap:10px;
+}
+
+.action-row button{
+    flex:1;
 }
 
 button{
-    background:#4CAF50;
-    color:white;
     border:none;
+    border-radius:16px;
+    padding:15px;
+    font-size:18px;
     cursor:pointer;
-    margin-top:15px;
 }
 
-button:hover{
-    background:#45a049;
+.small-btn{
+    background:#DDE8B3;
+}
+
+.type-btn{
+    background:white;
+    border:2px solid #F5B4B0;
+}
+
+.type-btn.active{
+    background:#F5B4B0;
+    color:white;
+}
+
+.milk-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    margin-top:10px;
+}
+
+.milk-btn{
+    background:white;
+    border:2px solid #F5B4B0;
+    font-size:28px;
+    font-weight:bold;
+}
+
+.milk-btn.active{
+    background:#FDEEEA;
+}
+
+input{
+    width:100%;
+    padding:15px;
+    border-radius:16px;
+    border:1px solid #ddd;
+    margin-top:10px;
+    box-sizing:border-box;
+}
+
+.save-btn{
+    width:100%;
+    margin-top:15px;
+    background:#F5B4B0;
+    color:white;
+    font-size:24px;
+    font-weight:bold;
 }
 
 .record{
@@ -54,49 +136,115 @@ button:hover{
     border-bottom:none;
 }
 
-.small{
-    color:#666;
-    font-size:13px;
-}
 </style>
 </head>
 
 <body>
 
+<div class="container">
+
 <h1>🍼 寶寶餵奶紀錄</h1>
+
+<div class="summary">
+
+    <div class="card">
+        <div class="summary-title">
+            距離上一餐
+        </div>
+
+        <div id="lastInterval" class="summary-value">
+            --
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="summary-title">
+            上一餐喝量
+        </div>
+
+        <div id="lastDrinkAmount" class="summary-value">
+            --
+        </div>
+    </div>
+
+</div>
 
 <div class="card">
 
-    <label>餵奶時間</label>
-    <input type="datetime-local" id="feedTime">
+    <div id="displayTime"></div>
 
-    <label>餵奶方式</label>
-    <select id="feedType">
-        <option value="配方奶">配方奶</option>
-        <option value="瓶餵母奶">瓶餵母奶</option>
-        <option value="親餵">親餵</option>
-    </select>
+    <div class="action-row">
+        <button id="add5Btn" class="small-btn">
+            +5分鐘
+        </button>
+    </div>
 
-    <label>準備量 (ml)</label>
-    <input type="number" id="preparedAmount" min="0">
+    <input
+        type="hidden"
+        id="feedTime">
 
-    <label>剩餘量 (ml)</label>
-    <input type="number" id="remainingAmount" min="0">
+    <h3>餵奶方式</h3>
 
-    <button id="saveBtn">
-        紀錄這餐
+    <div class="action-row">
+
+        <button class="type-btn active"
+                data-type="配方奶">
+            配方奶
+        </button>
+
+        <button class="type-btn"
+                data-type="瓶餵母奶">
+            母奶
+        </button>
+
+        <button class="type-btn"
+                data-type="親餵">
+            親餵
+        </button>
+
+    </div>
+
+    <input
+        type="hidden"
+        id="feedType"
+        value="配方奶">
+
+    <h3>奶量</h3>
+
+    <div class="milk-grid">
+
+        <button class="milk-btn" data-ml="90">90</button>
+        <button class="milk-btn" data-ml="120">120</button>
+        <button class="milk-btn" data-ml="150">150</button>
+        <button class="milk-btn" data-ml="180">180</button>
+
+    </div>
+
+    <input
+        id="preparedAmount"
+        type="number"
+        placeholder="或自行輸入奶量">
+
+    <button
+        id="saveBtn"
+        class="save-btn">
+        ✨ 開始餵奶
     </button>
 
 </div>
 
-<div class="card">
-    <h2>歷史紀錄</h2>
+<div class="card" style="margin-top:15px">
+
+    <h3>最近紀錄</h3>
+
     <div id="recordsContainer">
         載入中...
     </div>
+
 </div>
 
-<!-- 請務必保持此順序 -->
+</div>
+
 <script src="config.js"></script>
 <script src="app.js"></script>
 
