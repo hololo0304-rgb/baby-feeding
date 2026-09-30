@@ -344,12 +344,18 @@
       document.getElementById('leftoverAmount').value = '';
       setNowTime();
 
-      // 向 GAS 發送更新
+      // 向 GAS 發送更新（使用 text/plain 避開 CORS 預檢限制）
       if (GAS_URL) {
-        fetch(GAS_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'CREATE_OR_UPDATE', data: record })
-        }).catch(err => console.error("雲端發送失敗", err));
+        try {
+          await fetch(GAS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'CREATE_OR_UPDATE', data: record })
+          });
+          console.log("雲端同步發送成功");
+        } catch (err) {
+          console.error("雲端發送失敗", err);
+        }
       }
     }
 
@@ -378,10 +384,16 @@
       saveLocalRecords(records);
 
       if (GAS_URL) {
-        fetch(GAS_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'DELETE', id })
-        }).catch(err => console.error("雲端刪除失敗", err));
+        try {
+          await fetch(GAS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'DELETE', id })
+          });
+          console.log("雲端刪除發送成功");
+        } catch (err) {
+          console.error("雲端刪除失敗", err);
+        }
       }
     }
   </script>
