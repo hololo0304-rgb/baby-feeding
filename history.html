@@ -3,112 +3,151 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>餵奶歷史紀錄</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>歷史紀錄 - 寶寶餵奶紀錄</title>
   <style>
+    :root {
+      --primary: #4A90E2;
+      --bg: #F5F7FA;
+      --card-bg: #FFFFFF;
+      --text: #333333;
+      --border: #E1E6EB;
+    }
     body {
-      background-color: #FFF5F5;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 480px;
+    }
+    .btn-back {
+      display: inline-block;
+      width: 100%;
+      padding: 12px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: bold;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    /* 精簡緊湊歷史清單項目 */
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .history-item:last-child { border-bottom: none; }
+    .tag {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #E8F2FF;
+      color: var(--primary);
+      margin-right: 6px;
+    }
+    .time { color: #555; margin-right: 6px; }
+    .amount { font-weight: bold; }
+    .btn-del {
+      background: none;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 0 4px;
     }
   </style>
 </head>
-<body class="p-4 max-w-md mx-auto min-h-screen text-gray-700">
+<body>
+  <div class="container">
+    <!-- 頂部導覽 -->
+    <a href="index.html" class="btn-back">⬅️ 返回首頁紀錄頁面</a>
 
-  <!-- 標題與返回 -->
-  <div class="flex items-center justify-between mb-4">
-    <a href="index.html" class="bg-white border border-pink-200 px-4 py-2 rounded-2xl text-sm font-bold text-pink-400 hover:bg-pink-50">
-      ← 返回新增
-    </a>
-    <h1 class="font-bold text-lg text-gray-800">📜 全部歷史紀錄</h1>
-    <div class="w-16"></div>
-  </div>
-
-  <!-- 今日統計 -->
-  <div class="bg-white rounded-3xl p-4 shadow-sm border border-red-50 mb-4 flex justify-around text-center">
-    <div>
-      <div class="text-xs text-gray-400 font-semibold mb-1">今日總喝量</div>
-      <div id="todayTotal" class="text-xl font-bold text-pink-500">0 ml</div>
-    </div>
-    <div class="border-r border-gray-100"></div>
-    <div>
-      <div class="text-xs text-gray-400 font-semibold mb-1">今日總餐數</div>
-      <div id="todayCount" class="text-xl font-bold text-blue-500">0 餐</div>
-    </div>
-  </div>
-
-  <!-- 紀錄列表 -->
-  <div class="bg-white rounded-3xl p-5 shadow-sm border border-red-50">
-    <div id="historyList" class="space-y-3">
-      <div class="text-center py-8 text-gray-400">載入歷史紀錄中...</div>
+    <!-- 完整歷史清單 -->
+    <div class="card">
+      <h3 style="margin-top:0; font-size:1rem; padding-bottom:8px; border-bottom:1px solid var(--border);">完整雲端歷史紀錄</h3>
+      <div id="historyList">讀取中...</div>
     </div>
   </div>
 
   <script>
-    // 請替換為您的 GAS Web App 網址
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbz_REPLACE_WITH_YOUR_GAS_ID/exec';
+    const GAS_URL = "YOUR_GAS_WEB_APP_URL"; // 替換為實際 GAS URL
 
-    window.onload = fetchHistory;
+    document.addEventListener("DOMContentLoaded", () => {
+      loadHistory();
+    });
 
-    async function fetchHistory() {
+    function getLocalRecords() {
+      return JSON.parse(localStorage.getItem('baby_records') || '[]');
+    }
+
+    function saveLocalRecords(data) {
+      localStorage.setItem('baby_records', JSON.stringify(data));
+      renderList();
+    }
+
+    async function loadHistory() {
+      renderList(); // 先展示本地快照
       try {
         const res = await fetch(GAS_URL);
-        const data = await res.json();
-        if (data.status === 'success') {
-          renderList(data.records);
-          calculateToday(data.records);
+        const json = await res.json();
+        if (json.status === 'success') {
+          saveLocalRecords(json.data);
         }
       } catch (err) {
-        document.getElementById('historyList').innerHTML = '<div class="text-center py-4 text-red-400">無法載入紀錄</div>';
+        console.error("無法同步雲端歷史資料", err);
       }
     }
 
-    function calculateToday(records) {
-      const todayStr = new Date().toISOString().slice(0, 10);
-      const todayRecords = records.filter(r => r.timeStr.startsWith(todayStr));
-      
-      const totalVolume = todayRecords.reduce((sum, r) => sum + Number(r.actualAmount || 0), 0);
-      
-      document.getElementById('todayTotal').innerText = `${totalVolume} ml`;
-      document.getElementById('todayCount').innerText = `${todayRecords.length} 餐`;
-    }
+    function renderList() {
+      const records = getLocalRecords().sort((a,b) => new Date(b.time) - new Date(a.time));
+      const container = document.getElementById('historyList');
 
-    function renderList(records) {
-      const listEl = document.getElementById('historyList');
-      if (!records || records.length === 0) {
-        listEl.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">無歷史紀錄</div>';
+      if (records.length === 0) {
+        container.innerHTML = '<div style="color:#888; text-align:center; padding:16px;">尚無紀錄</div>';
         return;
       }
 
-      listEl.innerHTML = records.map(r => `
-        <div class="bg-red-50/40 rounded-2xl p-3 flex justify-between items-center border border-red-100">
+      container.innerHTML = records.map(r => `
+        <div class="history-item">
           <div>
-            <div class="font-bold text-gray-700 text-sm">⏰ ${r.type}</div>
-            <div class="text-xs text-gray-400 mt-0.5">泡 ${r.prepAmount} ml | 剩 ${r.restAmount} ml</div>
-            <div class="text-xs text-gray-500 mt-0.5">${r.timeStr}</div>
+            <span class="tag">${r.type}</span>
+            <span class="time">${r.time.replace('T', ' ')}</span>
           </div>
-          <div class="flex items-center gap-3">
-            <span class="font-bold text-pink-500 text-base">${r.actualAmount} ml</span>
-            <button onclick="deleteRecord('${r.id}')" class="text-gray-300 hover:text-red-400 p-1">🗑️</button>
+          <div>
+            <span class="amount">${r.actual} ml</span>
+            <button class="btn-del" onclick="deleteRecord('${r.id}')">🗑️</button>
           </div>
         </div>
       `).join('');
     }
 
     async function deleteRecord(id) {
-      if (!confirm('確定要刪除這筆紀錄嗎？')) return;
+      if (!confirm("確定要刪除這筆紀錄嗎？")) return;
 
-      try {
-        await fetch(GAS_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'delete', id: id })
-        });
-        alert('已刪除');
-        fetchHistory();
-      } catch (err) {
-        alert('刪除失敗：' + err.message);
-      }
+      let records = getLocalRecords().filter(r => r.id !== id);
+      saveLocalRecords(records);
+
+      fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'DELETE', id })
+      }).catch(err => console.error("雲端刪除失敗", err));
     }
   </script>
 </body>
