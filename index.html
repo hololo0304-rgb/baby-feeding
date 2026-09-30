@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>寶寶餵奶紀錄</title>
+  <!-- 引入共用設定檔 -->
+  <script src="config.js"></script>
   <style>
     :root {
       --primary: #4A90E2;
@@ -54,8 +56,9 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       font-size: 1rem;
+      box-sizing: border-box;
     }
-    .btn-btn-sm {
+    .btn-sm {
       padding: 10px 12px;
       background: #E8F2FF;
       color: var(--primary);
@@ -63,6 +66,7 @@
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
+      white-space: nowrap;
     }
     .btn-group { display: flex; gap: 8px; }
     .btn-option {
@@ -112,6 +116,7 @@
       text-decoration: none;
       color: var(--text);
       cursor: pointer;
+      box-sizing: border-box;
     }
 
     /* 清單 */
@@ -158,7 +163,7 @@
         <label>餵奶時間</label>
         <div class="flex-row">
           <input type="datetime-local" id="feedTime">
-          <button type="button" class="btn-btn-sm" id="btnPlus5">+5分鐘</button>
+          <button type="button" class="btn-sm" id="btnPlus5">+5分鐘</button>
         </div>
       </div>
 
@@ -204,10 +209,9 @@
   </div>
 
   <script>
-    const GAS_URL = "YOUR_GAS_WEB_APP_URL"; // 替換為實際 GAS URL
+    const GAS_URL = window.CONFIG?.GAS_URL || "";
     let currentEditId = null;
 
-    // 初始化頁面
     document.addEventListener("DOMContentLoaded", () => {
       setNowTime();
       initTypeSelector();
@@ -221,7 +225,7 @@
     function setNowTime() {
       const now = new Date();
       now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-      document.getElementById('feedTime').value = now.toISOString().slice(0,16);
+      document.getElementById('feedTime').value = now.toISOString().slice(0, 16);
     }
 
     function add5Mins() {
@@ -229,7 +233,7 @@
       const cur = input.value ? new Date(input.value) : new Date();
       cur.setMinutes(cur.getMinutes() + 5);
       cur.setMinutes(cur.getMinutes() - cur.getTimezoneOffset());
-      input.value = cur.toISOString().slice(0,16);
+      input.value = cur.toISOString().slice(0, 16);
     }
 
     function initTypeSelector() {
@@ -255,7 +259,8 @@
     }
 
     async function loadRecords() {
-      renderUI(); // 優先渲染本地端快照
+      renderUI(); // 優先使用快照渲染
+      if (!GAS_URL) return;
       try {
         const res = await fetch(GAS_URL);
         const json = await res.json();
@@ -263,14 +268,14 @@
           saveLocalRecords(json.data);
         }
       } catch (err) {
-        console.error("雲端讀取失敗，使用快照資料", err);
+        console.error("雲端同步失敗，切換為離線模式", err);
       }
     }
 
     function renderUI() {
-      const records = getLocalRecords().sort((a,b) => new Date(b.time) - new Date(a.time));
-      
-      // 更新頂部卡片
+      const records = getLocalRecords().sort((a, b) => new Date(b.time) - new Date(a.time));
+
+      // 1. 更新頂部摘要卡片
       if (records.length > 0) {
         const last = records[0];
         const diffMs = new Date() - new Date(last.time);
@@ -283,11 +288,11 @@
         document.getElementById('lastAmount').innerText = "-- ml";
       }
 
-      // 最近 12 小時清單
+      // 2. 最近 12 小時紀錄過濾
       const now = new Date();
       const twelveHoursAgo = new Date(now.getTime() - (12 * 60 * 60 * 1000));
       const recent = records.filter(r => new Date(r.time) >= twelveHoursAgo);
-      
+
       const listContainer = document.getElementById('recentList');
       if (recent.length === 0) {
         listContainer.innerHTML = '<div style="color:#888; font-size:0.9rem;">最近 12 小時無紀錄</div>';
@@ -325,7 +330,7 @@
         actual: Math.max(0, prepared - leftover)
       };
 
-      // 快照儲存
+      // 本地儲存更新
       let records = getLocalRecords();
       if (currentEditId) {
         records = records.map(r => r.id === currentEditId ? record : r);
@@ -334,48 +339,50 @@
       }
       saveLocalRecords(records);
 
-      // 清空修改狀態與表單
+      // 表單重置
       currentEditId = null;
       document.getElementById('leftoverAmount').value = '';
       setNowTime();
 
-      // 雲端同步
-      fetch(GAS_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'CREATE_OR_UPDATE', data: record })
-      }).catch(err => console.error("雲端同步失敗", err));
+      // 向 GAS 發送更新
+      if (GAS_URL) {
+        fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'CREATE_OR_UPDATE', data: record })
+        }).catch(err => console.error("雲端發送失敗", err));
+      }
     }
 
     function prepareEditLast() {
-      const records = getLocalRecords().sort((a,b) => new Date(b.time) - new Date(a.time));
-      if (records.length === 0) return alert("目前沒有前次紀錄可供修改");
+      const records = getLocalRecords().sort((a, b) => new Date(b.time) - new Date(a.time));
+      if (records.length === 0) return alert("目前尚無前次紀錄可供修改");
 
       const last = records[0];
       currentEditId = last.id;
 
-      // 設為目前時間，其餘資訊載入但保持剩餘量空白
-      setNowTime();
+      setNowTime(); // 時間預設設為目前
       document.getElementById('preparedAmount').value = last.prepared;
-      document.getElementById('leftoverAmount').value = ''; // 保持空白方便補填
-      
-      // 切換餵奶方式按鈕 active 狀態
+      document.getElementById('leftoverAmount').value = ''; // 保持空白
+
       document.querySelectorAll('#typeGroup .btn-option').forEach(b => {
         b.classList.toggle('active', b.dataset.val === last.type);
       });
 
-      alert("已載入前次紀錄資訊，請輸入補填的剩餘量後點擊「紀錄這餐」完成更新。");
+      alert("已載入前次紀錄內容，輸入剩餘 ml 數後點擊「紀錄這餐」即可更新。");
     }
 
     async function deleteRecord(id) {
       if (!confirm("確定要刪除這筆紀錄嗎？")) return;
-      
+
       let records = getLocalRecords().filter(r => r.id !== id);
       saveLocalRecords(records);
 
-      fetch(GAS_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'DELETE', id })
-      }).catch(err => console.error("雲端刪除失敗", err));
+      if (GAS_URL) {
+        fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'DELETE', id })
+        }).catch(err => console.error("雲端刪除失敗", err));
+      }
     }
   </script>
 </body>
