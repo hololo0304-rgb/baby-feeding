@@ -1,389 +1,67 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>寶寶餵奶紀錄</title>
-  <!-- 引入共用設定檔 -->
-  <script src="config.js"></script>
-  <style>
-    :root {
-      --primary: #4A90E2;
-      --bg: #F5F7FA;
-      --card-bg: #FFFFFF;
-      --text: #333333;
-      --border: #E1E6EB;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      margin: 0;
-      padding: 16px;
-      display: flex;
-      justify-content: center;
-    }
-    .container {
-      width: 100%;
-      max-width: 480px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    /* 摘要卡片 */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      text-align: center;
-    }
-    .summary-item .title { font-size: 0.85rem; color: #666; margin-bottom: 4px; }
-    .summary-item .value { font-size: 1.25rem; font-weight: bold; color: var(--primary); }
+async function handleSubmit() {
+  const time = document.getElementById('feedTime').value;
+  const type = document.querySelector('#typeGroup .active').dataset.val;
+  const prepared = Number(document.getElementById('preparedAmount').value) || 0;
+  const leftover = Number(document.getElementById('leftoverAmount').value) || 0;
 
-    /* 表單元件 */
-    .form-group { margin-bottom: 14px; }
-    .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 6px; }
-    .flex-row { display: flex; gap: 8px; align-items: center; }
-    input, select {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-    .btn-sm {
-      padding: 10px 12px;
-      background: #E8F2FF;
-      color: var(--primary);
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .btn-group { display: flex; gap: 8px; }
-    .btn-option {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid var(--border);
-      background: #fff;
-      border-radius: 8px;
-      cursor: pointer;
-      text-align: center;
-    }
-    .btn-option.active {
-      background: var(--primary);
-      color: #fff;
-      border-color: var(--primary);
-    }
-    .quick-ml-btns { display: flex; gap: 6px; margin-top: 6px; }
-    .quick-ml-btns button {
-      flex: 1;
-      padding: 6px;
-      background: #F0F4F8;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .btn-submit {
-      width: 100%;
-      padding: 14px;
-      background: #27AE60;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1.1rem;
-      font-weight: bold;
-      cursor: pointer;
-    }
+  if (!time) return alert("請選擇餵奶時間");
 
-    /* 雙導覽/操作按鈕 */
-    .nav-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .btn-secondary {
-      padding: 12px;
-      border: 1px solid var(--border);
-      background: #fff;
-      border-radius: 8px;
-      font-weight: 600;
-      text-align: center;
-      text-decoration: none;
-      color: var(--text);
-      cursor: pointer;
-      box-sizing: border-box;
-    }
+  const record = {
+    id: currentEditId || 'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+    time,
+    type,
+    prepared,
+    leftover,
+    actual: Math.max(0, prepared - leftover)
+  };
 
-    /* 清單 */
-    .record-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .record-item:last-child { border-bottom: none; }
-    .tag {
-      font-size: 0.75rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: #E0E0E0;
-      margin-right: 6px;
-    }
-    .btn-del {
-      background: none;
-      border: none;
-      font-size: 1.1rem;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <!-- 頂部摘要卡片 -->
-    <div class="card summary-grid">
-      <div class="summary-item">
-        <div class="title">距離上一餐</div>
-        <div class="value" id="timeAgo">--</div>
-      </div>
-      <div class="summary-item">
-        <div class="title">上一餐喝量</div>
-        <div class="value" id="lastAmount">-- ml</div>
-      </div>
-    </div>
+  // 本地快照儲存
+  let records = getLocalRecords();
+  if (currentEditId) {
+    records = records.map(r => r.id === currentEditId ? record : r);
+  } else {
+    records.push(record);
+  }
+  saveLocalRecords(records);
 
-    <!-- 餵奶紀錄表單 -->
-    <div class="card">
-      <div class="form-group">
-        <label>餵奶時間</label>
-        <div class="flex-row">
-          <input type="datetime-local" id="feedTime">
-          <button type="button" class="btn-sm" id="btnPlus5">+5分鐘</button>
-        </div>
-      </div>
+  // 重置表單
+  currentEditId = null;
+  document.getElementById('leftoverAmount').value = '';
+  setNowTime();
 
-      <div class="form-group">
-        <label>餵奶方式</label>
-        <div class="btn-group" id="typeGroup">
-          <div class="btn-option active" data-val="配方奶">配方奶</div>
-          <div class="btn-option" data-val="瓶餵母奶">瓶餵母奶</div>
-          <div class="btn-option" data-val="親餵">親餵</div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>準備/泡奶量 (ml)</label>
-        <input type="number" id="preparedAmount" placeholder="輸入 ml 數">
-        <div class="quick-ml-btns">
-          <button type="button" onclick="setPrepared(60)">60</button>
-          <button type="button" onclick="setPrepared(90)">90</button>
-          <button type="button" onclick="setPrepared(120)">120</button>
-          <button type="button" onclick="setPrepared(150)">150</button>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>剩餘量 (ml)</label>
-        <input type="number" id="leftoverAmount" placeholder="0">
-      </div>
-
-      <button type="button" class="btn-submit" id="btnSubmit">紀錄這餐</button>
-    </div>
-
-    <!-- 功能操作雙按鈕 -->
-    <div class="nav-actions">
-      <a href="history.html" class="btn-secondary">📜 歷史紀錄</a>
-      <button type="button" class="btn-secondary" id="btnEditLast">✏️ 補填/修改前次剩餘量</button>
-    </div>
-
-    <!-- 最近 12 小時紀錄清單 -->
-    <div class="card">
-      <h3 style="margin-top:0; font-size:1rem;">最近 12 小時紀錄</h3>
-      <div id="recentList">讀取中...</div>
-    </div>
-  </div>
-
-  <script>
-    const GAS_URL = window.CONFIG?.GAS_URL || "";
-    let currentEditId = null;
-
-    document.addEventListener("DOMContentLoaded", () => {
-      setNowTime();
-      initTypeSelector();
-      loadRecords();
-
-      document.getElementById('btnPlus5').addEventListener('click', add5Mins);
-      document.getElementById('btnSubmit').addEventListener('click', handleSubmit);
-      document.getElementById('btnEditLast').addEventListener('click', prepareEditLast);
-    });
-
-    function setNowTime() {
-      const now = new Date();
-      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-      document.getElementById('feedTime').value = now.toISOString().slice(0, 16);
-    }
-
-    function add5Mins() {
-      const input = document.getElementById('feedTime');
-      const cur = input.value ? new Date(input.value) : new Date();
-      cur.setMinutes(cur.getMinutes() + 5);
-      cur.setMinutes(cur.getMinutes() - cur.getTimezoneOffset());
-      input.value = cur.toISOString().slice(0, 16);
-    }
-
-    function initTypeSelector() {
-      document.querySelectorAll('#typeGroup .btn-option').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          document.querySelectorAll('#typeGroup .btn-option').forEach(b => b.classList.remove('active'));
-          e.target.classList.add('active');
-        });
+  // 向 GAS 發送更新（使用 text/plain 避開 CORS 預檢限制）
+  if (GAS_URL) {
+    try {
+      const payload = JSON.stringify({ action: 'CREATE_OR_UPDATE', data: record });
+      await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: payload
       });
+      console.log("雲端同步成功");
+    } catch (err) {
+      console.error("雲端發送失敗", err);
     }
+  }
+}
 
-    function setPrepared(val) {
-      document.getElementById('preparedAmount').value = val;
-    }
+async function deleteRecord(id) {
+  if (!confirm("確定要刪除這筆紀錄嗎？")) return;
 
-    function getLocalRecords() {
-      return JSON.parse(localStorage.getItem('baby_records') || '[]');
-    }
+  let records = getLocalRecords().filter(r => r.id !== id);
+  saveLocalRecords(records);
 
-    function saveLocalRecords(data) {
-      localStorage.setItem('baby_records', JSON.stringify(data));
-      renderUI();
-    }
-
-    async function loadRecords() {
-      renderUI(); // 優先使用快照渲染
-      if (!GAS_URL) return;
-      try {
-        const res = await fetch(GAS_URL);
-        const json = await res.json();
-        if (json.status === 'success') {
-          saveLocalRecords(json.data);
-        }
-      } catch (err) {
-        console.error("雲端同步失敗，切換為離線模式", err);
-      }
-    }
-
-    function renderUI() {
-      const records = getLocalRecords().sort((a, b) => new Date(b.time) - new Date(a.time));
-
-      // 1. 更新頂部摘要卡片
-      if (records.length > 0) {
-        const last = records[0];
-        const diffMs = new Date() - new Date(last.time);
-        const hours = Math.floor(diffMs / (1000 * 60 * 60));
-        const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-        document.getElementById('timeAgo').innerText = `${hours}時${mins}分`;
-        document.getElementById('lastAmount').innerText = `${last.actual} ml`;
-      } else {
-        document.getElementById('timeAgo').innerText = "--";
-        document.getElementById('lastAmount').innerText = "-- ml";
-      }
-
-      // 2. 最近 12 小時紀錄過濾
-      const now = new Date();
-      const twelveHoursAgo = new Date(now.getTime() - (12 * 60 * 60 * 1000));
-      const recent = records.filter(r => new Date(r.time) >= twelveHoursAgo);
-
-      const listContainer = document.getElementById('recentList');
-      if (recent.length === 0) {
-        listContainer.innerHTML = '<div style="color:#888; font-size:0.9rem;">最近 12 小時無紀錄</div>';
-        return;
-      }
-
-      listContainer.innerHTML = recent.map(r => `
-        <div class="record-item">
-          <div>
-            <span class="tag">${r.type}</span>
-            <strong>${r.time.replace('T', ' ')}</strong>
-          </div>
-          <div>
-            <span>${r.actual} ml</span>
-            <button class="btn-del" onclick="deleteRecord('${r.id}')">🗑️</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    async function handleSubmit() {
-      const time = document.getElementById('feedTime').value;
-      const type = document.querySelector('#typeGroup .active').dataset.val;
-      const prepared = Number(document.getElementById('preparedAmount').value) || 0;
-      const leftover = Number(document.getElementById('leftoverAmount').value) || 0;
-
-      if (!time) return alert("請選擇餵奶時間");
-
-      const record = {
-        id: currentEditId || 'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-        time,
-        type,
-        prepared,
-        leftover,
-        actual: Math.max(0, prepared - leftover)
-      };
-
-      // 本地儲存更新
-      let records = getLocalRecords();
-      if (currentEditId) {
-        records = records.map(r => r.id === currentEditId ? record : r);
-      } else {
-        records.push(record);
-      }
-      saveLocalRecords(records);
-
-      // 表單重置
-      currentEditId = null;
-      document.getElementById('leftoverAmount').value = '';
-      setNowTime();
-
-      // 向 GAS 發送更新
-      if (GAS_URL) {
-        fetch(GAS_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'CREATE_OR_UPDATE', data: record })
-        }).catch(err => console.error("雲端發送失敗", err));
-      }
-    }
-
-    function prepareEditLast() {
-      const records = getLocalRecords().sort((a, b) => new Date(b.time) - new Date(a.time));
-      if (records.length === 0) return alert("目前尚無前次紀錄可供修改");
-
-      const last = records[0];
-      currentEditId = last.id;
-
-      setNowTime(); // 時間預設設為目前
-      document.getElementById('preparedAmount').value = last.prepared;
-      document.getElementById('leftoverAmount').value = ''; // 保持空白
-
-      document.querySelectorAll('#typeGroup .btn-option').forEach(b => {
-        b.classList.toggle('active', b.dataset.val === last.type);
+  if (GAS_URL) {
+    try {
+      const payload = JSON.stringify({ action: 'DELETE', id });
+      await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: payload
       });
-
-      alert("已載入前次紀錄內容，輸入剩餘 ml 數後點擊「紀錄這餐」即可更新。");
+      console.log("雲端刪除成功");
+    } catch (err) {
+      console.error("雲端刪除失敗", err);
     }
-
-    async function deleteRecord(id) {
-      if (!confirm("確定要刪除這筆紀錄嗎？")) return;
-
-      let records = getLocalRecords().filter(r => r.id !== id);
-      saveLocalRecords(records);
-
-      if (GAS_URL) {
-        fetch(GAS_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'DELETE', id })
-        }).catch(err => console.error("雲端刪除失敗", err));
-      }
-    }
-  </script>
-</body>
-</html>
+  }
+}
