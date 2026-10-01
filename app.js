@@ -158,13 +158,12 @@ async function saveRecord(){
 
     try{
 
-        const preparedAmount = Number(
-            document
-                .getElementById(
-                    "preparedAmount"
-                )
-                .value
-        );
+        const preparedAmount =
+            Number(
+                document
+                    .getElementById("preparedAmount")
+                    .value
+            );
 
         if(!preparedAmount){
 
@@ -177,19 +176,17 @@ async function saveRecord(){
 
             feedTime:
                 document
-                .getElementById(
-                    "feedTime"
-                )
+                .getElementById("feedTime")
                 .value,
 
             feedType:
                 document
-                .getElementById(
-                    "feedType"
-                )
+                .getElementById("feedType")
                 .value,
 
-            preparedAmount,
+            preparedAmount:
+
+                preparedAmount,
 
             remainingAmount:0
 
@@ -218,9 +215,7 @@ async function saveRecord(){
         alert("✅ 已記錄");
 
         document
-            .getElementById(
-                "preparedAmount"
-            )
+            .getElementById("preparedAmount")
             .value = "";
 
         document
@@ -253,7 +248,7 @@ async function updateRemaining(){
 
         if(!latestRecord){
 
-            alert("沒有可更新的紀錄");
+            alert("尚無資料");
 
             return;
         }
@@ -261,10 +256,10 @@ async function updateRemaining(){
         const remainingAmount =
         Number(
             document
-                .getElementById(
-                    "remainingAmount"
-                )
-                .value
+            .getElementById(
+                "remainingAmount"
+            )
+            .value
         );
 
         if(isNaN(remainingAmount)){
@@ -274,6 +269,7 @@ async function updateRemaining(){
             return;
         }
 
+        const response =
         await fetch(
 
             `${window.CONFIG.GAS_URL}?action=updateRemaining`,
@@ -291,13 +287,19 @@ async function updateRemaining(){
                     feedTime:
                         latestRecord.feedTime,
 
-                    remainingAmount
+                    remainingAmount:
+                        remainingAmount
 
                 })
 
             }
 
         );
+
+        const result =
+        await response.json();
+
+        console.log(result);
 
         alert("✅ 已更新");
 
@@ -331,14 +333,17 @@ async function loadRecords(){
     try{
 
         const response =
-            await fetch(
-                window.CONFIG.GAS_URL
-            );
+        await fetch(
+            window.CONFIG.GAS_URL
+        );
 
         const records =
-            await response.json();
+        await response.json();
 
-        if(records.length){
+        if(
+            records &&
+            records.length
+        ){
 
             latestRecord =
                 records[0];
@@ -354,7 +359,7 @@ async function loadRecords(){
         }
 
         renderRecords(
-            records
+            records || []
         );
 
     }
@@ -364,6 +369,7 @@ async function loadRecords(){
             "載入失敗",
             error
         );
+
     }
 
 }
@@ -430,14 +436,9 @@ function updateLastFeedInfo(record){
 
         `
         ${record.feedType}
-        ｜
-
-        準備 ${record.preparedAmount}ml
-
+        ｜準備 ${record.preparedAmount}ml
         <br>
-
-        已填剩餘：
-        ${record.remainingAmount || 0}ml
+        已填剩餘：${record.remainingAmount || 0}ml
         `;
 
 }
@@ -449,7 +450,10 @@ function renderRecords(records){
             "recordsContainer"
         );
 
-    if(!records.length){
+    if(
+        !records ||
+        records.length === 0
+    ){
 
         container.innerHTML =
             "尚無資料";
