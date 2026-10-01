@@ -1,461 +1,428 @@
-console.log("Baby Feed App Start");
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-let currentTime = new Date();
-let latestRecord = null;
+<title>寶寶餵奶紀錄</title>
 
-document.addEventListener("DOMContentLoaded", () => {
+<style>
 
-    initTime();
-
-    initTypeButtons();
-
-    initMilkButtons();
-
-    initRemainButtons();
-
-    document
-        .getElementById("add5Btn")
-        .addEventListener(
-            "click",
-            add5Minutes
-        );
-
-    document
-        .getElementById("saveBtn")
-        .addEventListener(
-            "click",
-            saveRecord
-        );
-
-    document
-        .getElementById("updateRemainingBtn")
-        .addEventListener(
-            "click",
-            updateRemaining
-        );
-
-    loadRecords();
-
-});
-
-
-function initTime(){
-
-    currentTime = new Date();
-
-    updateDisplayTime();
-
+*{
+    box-sizing:border-box;
 }
 
-function updateDisplayTime(){
-
-    document
-        .getElementById("feedTime")
-        .value =
-        currentTime.toISOString();
-
-    document
-        .getElementById("displayTime")
-        .innerText =
-        currentTime.toLocaleString(
-            "zh-TW",
-            {
-                timeZone:"Asia/Taipei",
-                hour12:false
-            }
-        );
-
+body{
+    margin:0;
+    padding:8px;
+    background:#FFF8F7;
+    font-family:"Microsoft JhengHei",sans-serif;
+    color:#444;
 }
 
-function add5Minutes(){
-
-    currentTime.setMinutes(
-        currentTime.getMinutes() + 5
-    );
-
-    updateDisplayTime();
-
+.container{
+    max-width:700px;
+    margin:auto;
 }
 
-function initTypeButtons(){
-
-    document
-    .querySelectorAll(".type-btn")
-    .forEach(btn=>{
-
-        btn.addEventListener("click",()=>{
-
-            document
-            .querySelectorAll(".type-btn")
-            .forEach(x =>
-                x.classList.remove("active")
-            );
-
-            btn.classList.add("active");
-
-            document
-                .getElementById("feedType")
-                .value =
-                btn.dataset.type;
-
-        });
-
-    });
-
+h1{
+    text-align:center;
+    color:#D97986;
+    font-size:22px;
+    margin:6px 0 10px;
 }
 
-function initMilkButtons(){
-
-    document
-    .querySelectorAll(".milk-btn")
-    .forEach(btn=>{
-
-        btn.addEventListener("click",()=>{
-
-            document
-            .querySelectorAll(".milk-btn")
-            .forEach(x =>
-                x.classList.remove("active")
-            );
-
-            btn.classList.add("active");
-
-            document
-                .getElementById("preparedAmount")
-                .value =
-                btn.dataset.ml;
-
-        });
-
-    });
-
+.card{
+    background:#fff;
+    border-radius:12px;
+    padding:10px;
+    margin-bottom:8px;
+    box-shadow:0 2px 5px rgba(0,0,0,.05);
 }
 
-function initRemainButtons(){
-
-    document
-    .querySelectorAll(".remain-btn")
-    .forEach(btn=>{
-
-        btn.addEventListener("click",()=>{
-
-            document
-            .querySelectorAll(".remain-btn")
-            .forEach(x =>
-                x.classList.remove("active")
-            );
-
-            btn.classList.add("active");
-
-            document
-                .getElementById("remainingAmount")
-                .value =
-                btn.dataset.remain;
-
-        });
-
-    });
-
+.summary-row{
+    display:flex;
+    gap:8px;
 }
 
-async function saveRecord(){
-
-    try{
-
-        const payload = {
-
-            feedTime:
-                document
-                .getElementById("feedTime")
-                .value,
-
-            feedType:
-                document
-                .getElementById("feedType")
-                .value,
-
-            preparedAmount:
-                Number(
-                    document
-                    .getElementById("preparedAmount")
-                    .value
-                ),
-
-            remainingAmount:0
-
-        };
-
-        if(!payload.preparedAmount){
-
-            alert("請輸入奶量");
-
-            return;
-        }
-
-        console.log(payload);
-
-        await fetch(
-            window.CONFIG.GAS_URL,
-            {
-                method:"POST",
-
-                headers:{
-                    "Content-Type":"text/plain"
-                },
-
-                body:JSON.stringify(payload)
-            }
-        );
-
-        document
-        .getElementById("preparedAmount")
-        .value = "";
-
-        alert("✅ 已紀錄");
-
-        currentTime = new Date();
-
-        updateDisplayTime();
-
-        loadRecords();
-
-    }
-    catch(error){
-
-        console.error(error);
-
-        alert("寫入失敗");
-    }
-
+.summary-item{
+    flex:1;
+    background:#FDEEEA;
+    border-radius:10px;
+    padding:8px;
+    text-align:center;
+    font-size:14px;
+    font-weight:bold;
 }
 
-async function loadRecords(){
-
-    try{
-
-        const response =
-        await fetch(
-            window.CONFIG.GAS_URL
-        );
-
-        const records =
-        await response.json();
-
-        if(records.length){
-
-            latestRecord = records[0];
-
-            updateSummary(
-                latestRecord
-            );
-
-            updateLastFeedInfo(
-                latestRecord
-            );
-
-        }
-
-        renderRecords(
-            records
-        );
-
-    }
-    catch(error){
-
-        console.error(error);
-
-    }
-
+.summary-item span{
+    color:#D97986;
+    font-size:18px;
 }
 
-function updateSummary(record){
-
-    const feedTime =
-    new Date(record.feedTime);
-
-    const diff =
-    Date.now() -
-    feedTime.getTime();
-
-    const h =
-    Math.floor(
-        diff /
-        (1000*60*60)
-    );
-
-    const m =
-    Math.floor(
-        diff /
-        (1000*60)
-    ) % 60;
-
-    document
-        .getElementById("lastInterval")
-        .innerText =
-        `${h}h ${m}m`;
-
-    const drinkAmount =
-
-        (Number(record.preparedAmount) || 0)
-
-        -
-
-        (Number(record.remainingAmount) || 0);
-
-    document
-        .getElementById("lastDrinkAmount")
-        .innerText =
-        `${drinkAmount}ml`;
-
+.time-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
 }
 
-function updateLastFeedInfo(record){
-
-    document
-    .getElementById("lastFeedInfo")
-    .innerHTML =
-
-    `
-    ${record.feedType}
-    ｜
-
-    ${record.preparedAmount}ml
-
-    <br>
-
-    目前剩餘：
-
-    ${record.remainingAmount || 0}ml
-    `;
-
+#displayTime{
+    flex:1;
+    font-size:15px;
+    font-weight:bold;
+    color:#1976D2;
 }
 
-async function updateRemaining(){
-
-    if(!latestRecord){
-
-        alert("尚無紀錄");
-
-        return;
-    }
-
-    const value =
-
-    Number(
-        document
-        .getElementById("remainingAmount")
-        .value
-    );
-
-    if(isNaN(value)){
-
-        alert("請輸入剩餘量");
-
-        return;
-    }
-
-    try{
-
-        await fetch(
-
-            `${window.CONFIG.GAS_URL}?action=updateRemaining`,
-
-            {
-
-                method:"POST",
-
-                headers:{
-                    "Content-Type":"text/plain"
-                },
-
-                body:JSON.stringify({
-
-                    feedTime:
-                    latestRecord.feedTime,
-
-                    remainingAmount:
-                    value
-
-                })
-
-            }
-
-        );
-
-        alert("✅ 已更新");
-
-        document
-        .getElementById("remainingAmount")
-        .value = "";
-
-        loadRecords();
-
-    }
-    catch(error){
-
-        console.error(error);
-
-        alert("更新失敗");
-
-    }
-
+.small-btn{
+    border:none;
+    background:#DDE8B3;
+    padding:8px 12px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:13px;
 }
 
-function renderRecords(records){
+.section-title{
+    margin:10px 0 6px;
+    font-size:14px;
+    font-weight:bold;
+}
 
-    const container =
+.type-row{
+    display:flex;
+    gap:6px;
+}
 
-    document.getElementById(
-        "recordsContainer"
-    );
+.type-btn{
 
-    if(!records.length){
+    flex:1;
 
-        container.innerHTML =
-        "尚無資料";
+    border:2px solid #F5B4B0;
+    background:white;
 
-        return;
-    }
+    padding:8px;
 
-    container.innerHTML =
+    border-radius:10px;
 
-    records
-    .slice(0,10)
-    .map(r=>{
+    cursor:pointer;
 
-        const drink =
+    font-size:13px;
+}
 
-            (Number(r.preparedAmount)||0)
+.type-btn.active{
+    background:#F5B4B0;
+    color:white;
+}
 
-            -
+.milk-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:6px;
+}
 
-            (Number(r.remainingAmount)||0);
+.milk-btn{
 
-        return `
+    border:2px solid #F5B4B0;
+    background:white;
 
-        <div class="record">
+    padding:8px 0;
 
-            ${new Date(r.feedTime)
-            .toLocaleString(
-                "zh-TW",
-                {
-                    hour12:false
-                }
-            )}
+    border-radius:10px;
 
-            ｜
+    cursor:pointer;
 
-            ${r.feedType}
+    font-size:15px;
+    font-weight:bold;
+}
 
-            ｜
+.milk-btn.active{
+    background:#FDEEEA;
+}
 
-            ${drink}ml
+.remain-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:6px;
+}
 
+.remain-btn{
+
+    border:2px solid #DDE8B3;
+    background:white;
+
+    padding:8px 0;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    font-size:15px;
+    font-weight:bold;
+}
+
+.remain-btn.active{
+    background:#DDE8B3;
+}
+
+input{
+
+    width:100%;
+
+    padding:10px;
+
+    margin-top:8px;
+
+    border:1px solid #ddd;
+    border-radius:10px;
+
+    font-size:14px;
+}
+
+.save-btn{
+
+    width:100%;
+
+    margin-top:8px;
+
+    border:none;
+
+    background:#F5B4B0;
+
+    color:white;
+
+    padding:11px;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    font-size:16px;
+    font-weight:bold;
+}
+
+.update-btn{
+
+    width:100%;
+
+    margin-top:8px;
+
+    border:none;
+
+    background:#DDE8B3;
+
+    color:#333;
+
+    padding:11px;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    font-size:16px;
+    font-weight:bold;
+}
+
+#lastFeedInfo{
+
+    background:#fafafa;
+
+    padding:8px;
+
+    border-radius:10px;
+
+    text-align:center;
+
+    margin-bottom:8px;
+
+    font-size:13px;
+}
+
+.record{
+
+    font-size:13px;
+
+    padding:6px 0;
+
+    border-bottom:1px solid #eee;
+}
+
+.record:last-child{
+    border-bottom:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🍼 寶寶餵奶紀錄</h1>
+
+<div class="card">
+
+    <div class="summary-row">
+
+        <div class="summary-item">
+            距上一餐：
+            <span id="lastInterval">--</span>
         </div>
 
-        `;
+        <div class="summary-item">
+            上一餐：
+            <span id="lastDrinkAmount">--</span>
+        </div>
 
-    })
-    .join("");
+    </div>
 
-}
+</div>
+
+<div class="card">
+
+    <div class="time-row">
+
+        <div id="displayTime">
+            --
+        </div>
+
+        <button
+            id="add5Btn"
+            class="small-btn">
+
+            +5分鐘
+
+        </button>
+
+    </div>
+
+    <input
+        type="hidden"
+        id="feedTime">
+
+    <div class="section-title">
+        餵奶方式
+    </div>
+
+    <div class="type-row">
+
+        <button
+            class="type-btn active"
+            data-type="配方奶">
+            配方奶
+        </button>
+
+        <button
+            class="type-btn"
+            data-type="瓶餵母奶">
+            母奶
+        </button>
+
+        <button
+            class="type-btn"
+            data-type="親餵">
+            親餵
+        </button>
+
+    </div>
+
+    <input
+        type="hidden"
+        id="feedType"
+        value="配方奶">
+
+    <div class="section-title">
+        奶量（ml）
+    </div>
+
+    <div class="milk-grid">
+
+        <button class="milk-btn" data-ml="90">90</button>
+        <button class="milk-btn" data-ml="120">120</button>
+        <button class="milk-btn" data-ml="150">150</button>
+        <button class="milk-btn" data-ml="180">180</button>
+
+    </div>
+
+    <input
+        id="preparedAmount"
+        type="number"
+        placeholder="自訂奶量">
+
+    <button
+        id="saveBtn"
+        class="save-btn">
+
+        ✨ 開始餵奶
+
+    </button>
+
+</div>
+
+<div class="card">
+
+    <div class="section-title">
+        補填上一餐剩餘量
+    </div>
+
+    <div id="lastFeedInfo">
+        尚無資料
+    </div>
+
+    <div class="remain-grid">
+
+        <button
+            class="remain-btn"
+            data-remain="30">
+            30
+        </button>
+
+        <button
+            class="remain-btn"
+            data-remain="60">
+            60
+        </button>
+
+        <button
+            class="remain-btn"
+            data-remain="90">
+            90
+        </button>
+
+    </div>
+
+    <input
+        id="remainingAmount"
+        type="number"
+        placeholder="自訂剩餘量">
+
+    <button
+        id="updateRemainingBtn"
+        class="update-btn">
+
+        更新剩餘量
+
+    </button>
+
+</div>
+
+<div class="card">
+
+    <div class="section-title">
+        最近紀錄
+    </div>
+
+    <div id="recordsContainer">
+
+        載入中...
+
+    </div>
+
+</div>
+
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
