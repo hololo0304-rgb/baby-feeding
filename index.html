@@ -12,7 +12,6 @@
   --primary-pink-hover: #FF9E99;
   --soft-green: #E2F0CB;
   --soft-green-hover: #D4E7B5;
-  --soft-purple: #E0C3FC;
   --text-main: #4A4A4A;
   --text-sub: #7D7D7D;
   --border-color: #FFE5D9;
@@ -25,56 +24,61 @@
 body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; padding: 12px; min-height: 100vh; }
 .app-container { width: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
 
-header { text-align: center; padding: 6px 0; }
+header { text-align: center; padding: 4px 0; }
 header h1 { font-size: 1.4rem; color: #5C6B73; font-weight: 700; }
 
 .card { background: var(--card-bg); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
 
 /* 頂部統計卡片 */
-.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 2px; }
 .stat-box { background: #FFF5F2; padding: 8px 12px; border-radius: 12px; text-align: center; font-size: 0.85rem; color: var(--text-sub); }
 .stat-box b { font-size: 1.05rem; color: #D8707C; margin-left: 4px; }
 
-/* 頁面切換控制 (C區需求) */
+/* 頁面切換機制 */
 .view-page { display: none; }
 .view-page.active { display: flex; flex-direction: column; gap: 12px; }
 
-/* A 區：時間欄位（精簡至分，無秒數） */
-.time-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.time-display { font-size: 0.95rem; font-weight: bold; color: #3182CE; }
-.btn-plus5 { background: var(--soft-green); color: #4A6B22; border: none; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
+/* A 區 + E 區：可輸入時間 + 大顆 +5分鐘按鈕 (樣式同親餵按鈕) */
+.time-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.time-input { height: 40px; border: 1.5px solid var(--border-color); border-radius: 10px; padding: 0 8px; font-size: 0.88rem; outline: none; background: #FAF9F6; color: #2B6CB0; font-weight: bold; width: 100%; }
+.btn-plus5 { height: 40px; border: 1.5px solid var(--border-color); background: var(--soft-green); color: #4A6B22; border-radius: 10px; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
 /* 餵奶方式切換 */
 .section-label { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 6px; font-weight: 600; }
 .type-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
-.type-btn { height: 40px; border: 1.5px solid var(--border-color); background: #FFF; border-radius: 10px; font-size: 0.85rem; font-weight: 600; color: var(--text-main); cursor: pointer; }
+.type-btn { height: 40px; border: 1.5px solid var(--border-color); background: #FFF; border-radius: 10px; font-size: 0.9rem; font-weight: 600; color: var(--text-main); cursor: pointer; }
 .type-btn.active { background-color: var(--primary-pink); color: white; border-color: var(--primary-pink); }
 
 /* 奶量按鈕 */
-.amount-selector { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
-.amount-btn { height: 36px; border: 1.5px solid var(--border-color); background: #FFF; border-radius: 8px; font-size: 0.85rem; font-weight: bold; color: var(--text-main); cursor: pointer; }
+.amount-selector { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
+.amount-btn { height: 38px; border: 1.5px solid var(--border-color); background: #FFF; border-radius: 8px; font-size: 0.88rem; font-weight: bold; color: var(--text-main); cursor: pointer; }
 .amount-btn.active { background-color: #FFE5D9; border-color: var(--primary-pink); color: #D8707C; }
 
-.custom-input { width: 100%; height: 38px; border: 1.5px solid var(--border-color); border-radius: 8px; padding: 0 10px; font-size: 0.85rem; outline: none; margin-bottom: 10px; background: #FAF9F6; }
+/* 自訂奶量與開始餵奶按鈕併行 */
+.submit-row { display: flex; gap: 8px; align-items: center; }
+.custom-amount-input { width: 105px; height: 44px; border: 1.5px solid var(--border-color); border-radius: 12px; padding: 0 8px; font-size: 0.85rem; outline: none; background: #FAF9F6; text-align: center; flex-shrink: 0; }
+.btn-submit { flex: 1; height: 44px; background-color: var(--primary-pink); color: white; border: none; border-radius: 22px; font-size: 1rem; font-weight: bold; cursor: pointer; box-shadow: 0 3px 8px rgba(255, 183, 178, 0.4); display: flex; align-items: center; justify-content: center; gap: 4px; }
 
-.btn-submit { width: 100%; height: 46px; background-color: var(--primary-pink); color: white; border: none; border-radius: 23px; font-size: 1rem; font-weight: bold; cursor: pointer; box-shadow: 0 3px 8px rgba(255, 183, 178, 0.4); display: flex; align-items: center; justify-content: center; gap: 6px; }
+/* B 區：補填上一餐剩餘量 (單行緊湊版：準備量 | 30 | 自訂輸入 | 填剩餘量) */
+.compact-b-zone { display: flex; align-items: center; gap: 6px; background: #FAF9F6; padding: 8px; border-radius: 10px; border: 1px solid var(--border-color); white-space: nowrap; }
+.b-prep-text { font-size: 0.8rem; color: var(--text-sub); flex-shrink: 0; }
+.b-prep-text b { color: var(--text-main); font-size: 0.85rem; }
+.btn-quick-30 { height: 34px; padding: 0 8px; border: 1px solid var(--border-color); background: #FFF; border-radius: 6px; font-size: 0.82rem; font-weight: bold; color: var(--text-main); cursor: pointer; flex-shrink: 0; }
+.b-input { width: 62px; height: 34px; border: 1px solid var(--border-color); border-radius: 6px; text-align: center; font-size: 0.85rem; outline: none; background: #FFF; flex-shrink: 0; }
+.btn-update-left { flex: 1; height: 34px; background: var(--soft-green); color: #4A6B22; border: none; border-radius: 6px; font-size: 0.82rem; font-weight: bold; cursor: pointer; white-space: nowrap; }
 
-/* B 區：整區高度壓縮成橫向單行 */
-.compact-b-zone { display: flex; align-items: center; justify-content: space-between; gap: 6px; background: #FAF9F6; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border-color); }
-.b-info { font-size: 0.8rem; color: var(--text-sub); line-height: 1.2; flex-shrink: 0; }
-.b-info b { color: var(--text-main); }
-.b-input { width: 70px; height: 32px; border: 1px solid var(--border-color); border-radius: 6px; text-align: center; font-size: 0.85rem; outline: none; }
-.btn-update-left { background: var(--soft-green); color: #4A6B22; border: none; height: 32px; padding: 0 10px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; white-shrink: 0; }
-
-/* C 區：歷史紀錄按鈕與標頭 */
+/* C 區導覽 */
 .nav-bar { display: flex; justify-content: space-between; align-items: center; }
-.btn-history-link { background: #EBF8FF; color: #2B6CB0; border: 1px solid #BEE3F8; height: 34px; padding: 0 12px; border-radius: 8px; font-size: 0.82rem; font-weight: bold; cursor: pointer; }
+.btn-history-link { background: #EBF8FF; color: #2B6CB0; border: 1px solid #BEE3F8; height: 32px; padding: 0 10px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
 
-/* D 區：最近 12 小時紀錄與刪除按鈕 */
+/* D 區：兩行式排版，避免跨行不齊 */
 .record-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
-.record-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #FAF9F6; border-radius: 8px; border-left: 4px solid var(--primary-pink); font-size: 0.82rem; }
-.record-text { color: var(--text-main); }
-.record-text b { color: #D8707C; }
+.record-card { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #FAF9F6; border-radius: 10px; border-left: 4px solid var(--primary-pink); }
+.record-card-top { display: flex; justify-content: space-between; align-items: center; }
+.record-time-type { font-size: 0.85rem; font-weight: bold; color: #4A5568; }
+.record-type-badge { background: #E2E8F0; color: #4A5568; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; margin-left: 6px; font-weight: normal; }
+.record-card-bottom { display: flex; align-items: baseline; gap: 8px; font-size: 0.82rem; color: var(--text-sub); }
+.record-actual { font-size: 1rem; font-weight: 800; color: #D8707C; }
 .btn-delete { background: #FFE3E3; color: var(--danger-color); border: none; padding: 3px 8px; border-radius: 5px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
 </style>
 </head>
@@ -88,16 +92,16 @@ header h1 { font-size: 1.4rem; color: #5C6B73; font-weight: 700; }
     
     <!-- 頂部統計欄 -->
     <div class="stat-grid">
-      <div class="stat-box">距上一餐：<b id="timeDiff">18h 12m</b></div>
-      <div class="stat-box">上一餐：<b id="lastAmount">90ml</b></div>
+      <div class="stat-box">距上一餐：<b id="timeDiff">--h --m</b></div>
+      <div class="stat-box">上一餐實際：<b id="lastAmount">--ml</b></div>
     </div>
 
     <!-- 主記錄區塊 -->
     <div class="card">
-      <!-- A 區：精簡時間 (無秒數) + E (+5分鐘按鈕) -->
+      <!-- A 區 (可輸入/選擇時間) + E 區 (大顆 +5分鐘按鈕) -->
       <div class="time-bar">
-        <span class="time-display" id="currentTimeDisplay">2026/10/01 09:55</span>
-        <button class="btn-plus5" onclick="addMinutes(5)">+5分鐘</button>
+        <input type="datetime-local" id="inputTime" class="time-input" step="60" />
+        <button class="btn-plus5" onclick="addMinutes(5)">＋ 5 分鐘</button>
       </div>
 
       <div class="section-label">餵奶方式</div>
@@ -109,49 +113,50 @@ header h1 { font-size: 1.4rem; color: #5C6B73; font-weight: 700; }
 
       <div class="section-label">奶量 ( ml )</div>
       <div class="amount-selector">
-        <button class="amount-btn" onclick="selectAmount(90)">90</button>
+        <button class="amount-btn active" onclick="selectAmount(90)">90</button>
         <button class="amount-btn" onclick="selectAmount(120)">120</button>
         <button class="amount-btn" onclick="selectAmount(150)">150</button>
         <button class="amount-btn" onclick="selectAmount(180)">180</button>
       </div>
-      <input type="number" id="customAmountInput" class="custom-input" placeholder="自訂奶量" />
 
-      <button class="btn-submit" onclick="submitFeeding()">✨ 開始餵奶</button>
+      <!-- 自訂奶量輸入框與開始餵奶按鈕併行 -->
+      <div class="submit-row">
+        <input type="number" id="customAmountInput" class="custom-amount-input" placeholder="自訂ml" />
+        <button class="btn-submit" onclick="submitFeeding()">✨ 開始餵奶</button>
+      </div>
     </div>
 
-    <!-- B 區：補填上一餐剩餘量 (高度壓縮成一行) -->
-    <div class="card" style="padding: 10px;">
+    <!-- B 區：補填上一餐剩餘量 (單行緊湊版) -->
+    <div class="card" style="padding: 8px 10px;">
       <div class="compact-b-zone">
-        <div class="b-info">
-          <span>上一餐: <b id="bMealType">配方奶</b> | 準備 <b id="bPrep">90</b>ml</span><br>
-          <span style="font-size:0.75rem;">已填剩餘: <b id="bLeft">0</b>ml</span>
-        </div>
-        <input type="number" id="bLeftInput" class="b-input" placeholder="剩餘ml" />
+        <div class="b-prep-text">上一餐準備 <b id="bPrep">90</b>ml</div>
+        <button class="btn-quick-30" onclick="setBLeftQuick(30)">30ml</button>
+        <input type="number" id="bLeftInput" class="b-input" placeholder="剩餘" />
         <button class="btn-update-left" onclick="updateLeftAmount()">填剩餘量</button>
       </div>
     </div>
 
-    <!-- D 區：最近 12 小時紀錄 (含右側 C/D 按鈕區) -->
+    <!-- D 區：最近 12 小時紀錄 (含右側刪除與兩行排版) -->
     <div class="card">
       <div class="nav-bar">
         <span class="section-label" style="margin-bottom:0;">最近 12 小時紀錄</span>
-        <!-- C 區：切換至歷史頁面按鈕 -->
-        <button class="btn-history-link" onclick="switchPage('historyView')">完整歷史紀錄 ➔</button>
+        <!-- C 區：前往歷史頁面按鈕 -->
+        <button class="btn-history-link" onclick="switchPage('historyView')">完整歷史 ➔</button>
       </div>
       
       <div id="recent12hList" class="record-list">
-        <!-- 動態渲染 12 小時內紀錄 -->
+        <!-- 動態渲染 12 小時紀錄 -->
       </div>
     </div>
 
   </div>
 
-  <!-- ================= C 區：新生成的歷史紀錄頁面 (History View) ================= -->
+  <!-- ================= C 區：獨立歷史紀錄頁面 (History View) ================= -->
   <div id="historyView" class="view-page">
     <div class="card">
       <div class="nav-bar" style="margin-bottom: 10px;">
         <button class="btn-history-link" onclick="switchPage('mainView')">← 返回主頁</button>
-        <span style="font-weight: bold; color: #5C6B73;">歷史紀錄清單</span>
+        <span style="font-weight: bold; color: #5C6B73;">完整歷史紀錄</span>
       </div>
       <div id="fullHistoryList" class="record-list">
         <!-- 動態渲染所有歷史紀錄 -->
@@ -164,24 +169,23 @@ header h1 { font-size: 1.4rem; color: #5C6B73; font-weight: 700; }
 <script>
   let currentSelectedType = '配方奶';
   let currentSelectedAmount = 90;
-  let currentSelectedTime = new Date();
-
   let globalRecords = [];
 
-  // A 區：初始化與更新時間（精簡至分，移除秒數）
-  function updateTimeDisplay() {
-    const y = currentSelectedTime.getFullYear();
-    const m = currentSelectedTime.getMonth() + 1;
-    const d = currentSelectedTime.getDate();
-    const hh = String(currentSelectedTime.getHours()).padStart(2, '0');
-    const mm = String(currentSelectedTime.getMinutes()).padStart(2, '0');
-    document.getElementById('currentTimeDisplay').innerText = `${y}/${m}/${d} ${hh}:${mm}`;
+  // A 區：初始化 datetime-local 欄位預設值 (精確到分)
+  function initTimeInput() {
+    const now = new Date();
+    now.setSeconds(0, 0);
+    const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    document.getElementById('inputTime').value = localIso;
   }
 
-  // E 區：+5分鐘
+  // E 區：+5分鐘按鈕邏輯
   function addMinutes(mins) {
-    currentSelectedTime = new Date(currentSelectedTime.getTime() + mins * 60000);
-    updateTimeDisplay();
+    const input = document.getElementById('inputTime');
+    if (!input.value) return;
+    const curr = new Date(input.value);
+    const updated = new Date(curr.getTime() + mins * 60000);
+    input.value = new Date(updated.getTime() - updated.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   }
 
   function selectType(btn, type) {
@@ -197,14 +201,30 @@ header h1 { font-size: 1.4rem; color: #5C6B73; font-weight: 700; }
     document.getElementById('customAmountInput').value = '';
   }
 
-  // C 區：頁面切換 (主頁 ↔ 歷史頁，含返回鍵)
+  // B 區：30ml 快捷鍵
+  function setBLeftQuick(val) {
+    document.getElementById('bLeftInput').value = val;
+  }
+
+  // C 區：頁面切換
   function switchPage(pageId) {
     document.querySelectorAll('.view-page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
     if (pageId === 'historyView') renderFullHistory();
   }
 
-  // 讀取紀錄
+  // 格式化顯示時間 (無秒數)
+  function formatTimeNoSeconds(timeStr) {
+    if (!timeStr) return '';
+    const cleanStr = timeStr.replace('T', ' ');
+    const parts = cleanStr.split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0]} ${parts[1].substring(0, 5)}`;
+    }
+    return cleanStr.substring(0, 16);
+  }
+
+  // 從 Apps Script 讀取資料
   function fetchRecords() {
     if (typeof google !== 'undefined' && google.script) {
       google.script.run.withSuccessHandler(data => {
@@ -214,9 +234,9 @@ header h1 { font-size: 1.4rem; color: #5C6B73; font-weight: 700; }
     } else {
       // 模擬測試資料
       globalRecords = [
-        { id: "1", time: "2026/10/1 09:55", type: "配方奶", prep: 90, left: 30, actual: 60 },
-        { id: "2", time: "2026/10/1 05:30", type: "配方奶", prep: 120, left: 10, actual: 110 },
-        { id: "3", time: "2026/9/30 15:43", type: "配方奶", prep: 90, left: 0, actual: 90 }
+        { id: "1", time: "2026/10/01 09:55", type: "配方奶", prep: 90, left: 30, actual: 60 },
+        { id: "2", time: "2026/10/01 05:30", type: "配方奶", prep: 120, left: 10, actual: 110 },
+        { id: "3", time: "2026/09/30 15:43", type: "配方奶", prep: 90, left: 0, actual: 90 }
       ];
       renderAll();
     }
@@ -224,11 +244,14 @@ header h1 { font-size: 1.4rem; color: #5C6B73; font-weight: 700; }
 
   // 開始餵奶新增
   function submitFeeding() {
+    const rawTime = document.getElementById('inputTime').value;
+    if (!rawTime) return alert('請選擇時間');
+
     const customAmt = Number(document.getElementById('customAmountInput').value);
     const finalPrep = customAmt > 0 ? customAmt : currentSelectedAmount;
+    const formattedTime = formatTimeNoSeconds(rawTime);
     
-    const timeStr = document.getElementById('currentTimeDisplay').innerText;
-    const recordData = { time: timeStr, type: currentSelectedType, prep: finalPrep, left: 0, actual: finalPrep };
+    const recordData = { time: formattedTime, type: currentSelectedType, prep: finalPrep, left: 0, actual: finalPrep };
 
     if (typeof google !== 'undefined' && google.script) {
       google.script.run.withSuccessHandler(() => fetchRecords()).addRecord(recordData);
@@ -236,9 +259,10 @@ header h1 { font-size: 1.4rem; color: #5C6B73; font-weight: 700; }
       globalRecords.unshift({ id: Date.now().toString(), ...recordData });
       renderAll();
     }
+    document.getElementById('customAmountInput').value = '';
   }
 
-  // B 區：更新上一餐剩餘量
+  // B 區：填剩餘量
   function updateLeftAmount() {
     const leftVal = Number(document.getElementById('bLeftInput').value) || 0;
     if (globalRecords.length === 0) return alert('無上一餐紀錄可補填');
@@ -264,19 +288,30 @@ header h1 { font-size: 1.4rem; color: #5C6B73; font-weight: 700; }
     }
   }
 
+  // 計算距上一餐時間
+  function updateTimeDiff() {
+    if (globalRecords.length === 0) return;
+    const lastTime = new Date(globalRecords[0].time.replace(/-/g, '/')).getTime();
+    const now = new Date().getTime();
+    const diffMs = now - lastTime;
+    if (diffMs < 0) return;
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    document.getElementById('timeDiff').innerText = `${hours}h ${mins}m`;
+  }
+
   // 渲染畫面
   function renderAll() {
     if (globalRecords.length > 0) {
       const last = globalRecords[0];
-      document.getElementById('bMealType').innerText = last.type;
       document.getElementById('bPrep').innerText = last.prep;
-      document.getElementById('bLeft').innerText = last.left;
       document.getElementById('lastAmount').innerText = `${last.actual}ml`;
+      updateTimeDiff();
     }
     renderRecent12h();
   }
 
-  // D 區：渲染最近 12 小時紀錄 (帶刪除按鈕、準備/剩餘/實際格式)
+  // D 區：最近 12 小時紀錄 (兩行清爽排版：時間+方式+刪除按鈕 / 實際吃奶量大字)
   function renderRecent12h() {
     const list = document.getElementById('recent12hList');
     const now = new Date().getTime();
@@ -295,11 +330,17 @@ header h1 { font-size: 1.4rem; color: #5C6B73; font-weight: 700; }
     list.innerHTML = recent.map(r => {
       const timeOnly = r.time.split(' ')[1] || r.time;
       return `
-        <div class="record-item">
-          <div class="record-text">
-            <b>${timeOnly}</b> | ${r.type} | 準備${r.prep}ml 剩餘${r.left}ml <b>實際${r.actual}ml</b>
+        <div class="record-card">
+          <div class="record-card-top">
+            <div class="record-time-type">
+              ⏰ ${timeOnly} <span class="record-type-badge">${r.type}</span>
+            </div>
+            <button class="btn-delete" onclick="deleteRecord('${r.id}')">刪除</button>
           </div>
-          <button class="btn-delete" onclick="deleteRecord('${r.id}')">刪除</button>
+          <div class="record-card-bottom">
+            <span>實際吃 <b class="record-actual">${r.actual}</b> ml</span>
+            <span>(準備 ${r.prep} / 剩 ${r.left})</span>
+          </div>
         </div>
       `;
     }).join('');
@@ -314,16 +355,22 @@ header h1 { font-size: 1.4rem; color: #5C6B73; font-weight: 700; }
     }
 
     list.innerHTML = globalRecords.map(r => `
-      <div class="record-item">
-        <div class="record-text">
-          <b>${r.time}</b> | ${r.type} | 準備${r.prep}ml 剩餘${r.left}ml <b>實際${r.actual}ml</b>
+      <div class="record-card">
+        <div class="record-card-top">
+          <div class="record-time-type">
+            📅 ${r.time} <span class="record-type-badge">${r.type}</span>
+          </div>
+        </div>
+        <div class="record-card-bottom">
+          <span>實際吃 <b class="record-actual">${r.actual}</b> ml</span>
+          <span>(準備 ${r.prep} / 剩 ${r.left})</span>
         </div>
       </div>
     `).join('');
   }
 
   // 初始化執行
-  updateTimeDisplay();
+  initTimeInput();
   fetchRecords();
 </script>
 </body>
