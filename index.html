@@ -3,69 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>餵奶紀錄小工具</title>
+  <title>寶寶餵奶紀錄</title>
   <style>
     :root {
-      --bg-color: #FFF9F5;
+      --bg-color: #F8F9FA;
       --card-bg: #FFFFFF;
-      --primary-pink: #FFB7B2;
-      --primary-pink-hover: #FF9E99;
-      --text-main: #4A4A4A;
-      --text-sub: #7D7D7D;
-      --border-color: #FFE5D9;
+      --primary-color: #FF8A80;
+      --primary-hover: #FF5252;
+      --secondary-color: #4ECDC4;
+      --sub-bg: #F1F3F5;
+      --text-main: #2D3748;
+      --text-sub: #718096;
+      --border-color: #E2E8F0;
       --danger-color: #FF6B6B;
-      --shadow: 0 4px 15px rgba(255, 183, 178, 0.15);
+      --shadow: 0 2px 8px rgba(0,0,0,0.06);
       --radius: 12px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg-color); color: var(--text-main); padding: 12px; min-height: 100vh; }
     
-    .app-container { max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
-    .card { background: var(--card-bg); border-radius: var(--radius); padding: 12px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
+    /* 讓容器滿版延伸 */
+    .app-container { width: 100%; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: var(--card-bg); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--border-color); width: 100%; }
 
     /* 頁面切換機制 (C) */
     .view-page { display: none; }
-    .view-page.active { display: flex; flex-direction: column; gap: 12px; }
+    .view-page.active { display: flex; flex-direction: column; gap: 12px; width: 100%; }
 
-    .page-header { display: flex; justify-content: space-between; align-items: center; }
-    .page-header h2 { font-size: 1.1rem; color: #5C6B73; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .page-header h2 { font-size: 1.15rem; color: #2D3748; font-weight: 700; }
 
-    /* B 區：整區單行壓縮 Flexbox */
-    .compact-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      overflow-x: auto;
-      white-space: nowrap;
-      padding-bottom: 2px;
+    /* B 區：整區滿版極簡卡片 (非壓縮成極小一行，而是滿版質感佈局) */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+      margin-bottom: 10px;
     }
     
-    /* 調整輸入欄位大小 */
-    .compact-row input[type="datetime-local"] { width: 155px; height: 38px; font-size: 0.85rem; padding: 0 6px; border: 1px solid var(--border-color); border-radius: 8px; }
-    .compact-row input[type="number"] { width: 68px; height: 38px; font-size: 0.85rem; text-align: center; border: 1px solid var(--border-color); border-radius: 8px; }
-    
-    .btn { height: 38px; padding: 0 10px; border-radius: 8px; font-size: 0.85rem; font-weight: bold; border: none; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
-    .btn-main { background-color: var(--primary-pink); color: white; }
-    .btn-sub { background-color: #FFF0E6; color: #D8707C; border: 1px solid var(--border-color); }
-    .btn-nav { background-color: #E2F0CB; color: #556B2F; }
-    .btn-del { background-color: var(--danger-color); color: white; height: 28px; padding: 0 8px; font-size: 0.75rem; border-radius: 6px; }
+    .form-control {
+      width: 100%;
+      height: 42px;
+      padding: 0 10px;
+      font-size: 0.95rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background-color: #FAFAFA;
+      color: var(--text-main);
+      outline: none;
+    }
+    .form-control:focus { border-color: var(--primary-color); background-color: #FFF; }
 
-    /* D 區：最近 12 小時記錄 */
-    .record-list { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+    .btn-group-row {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .btn {
+      height: 44px;
+      padding: 0 12px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s;
+    }
+    .btn-main { background-color: var(--primary-color); color: white; flex: 2; }
+    .btn-main:active { background-color: var(--primary-hover); }
+    .btn-sub { background-color: var(--sub-bg); color: var(--text-main); border: 1px solid var(--border-color); flex: 1.2; }
+    .btn-nav { background-color: #E6FFFA; color: #2C7A7B; border: 1px solid #B2F5EA; font-size: 0.88rem; height: 36px; }
+    .btn-del { background-color: #FFE3E3; color: var(--danger-color); height: 32px; padding: 0 10px; font-size: 0.8rem; border-radius: 6px; font-weight: bold; }
+    .btn-del:active { background-color: var(--danger-color); color: white; }
+
+    /* D 區：最近 12 小時記錄列表 (滿版卡片) */
+    .record-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
     .record-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 10px;
-      background: #FAF9F6;
+      padding: 10px 12px;
+      background: #FAFAFA;
       border-radius: 8px;
-      border-left: 4px solid var(--primary-pink);
-      font-size: 0.88rem;
+      border-left: 4px solid var(--primary-color);
+      width: 100%;
     }
-    .record-time { font-weight: bold; color: #666; font-size: 0.82rem; }
-    .record-detail { color: var(--text-main); }
-    .loading-text { text-align: center; color: var(--text-sub); font-size: 0.85rem; padding: 10px 0; }
+    .record-main-info { display: flex; flex-direction: column; gap: 2px; }
+    .record-time { font-weight: 700; color: #4A5568; font-size: 0.88rem; }
+    .record-detail { color: var(--text-main); font-size: 0.95rem; }
+    .record-detail b { color: var(--primary-hover); }
+    .loading-text { text-align: center; color: var(--text-sub); font-size: 0.9rem; padding: 12px 0; }
   </style>
 </head>
 <body>
@@ -76,19 +109,22 @@
   <div id="mainView" class="view-page active">
     
     <div class="page-header">
-      <h2>嬰兒餵奶快速登記</h2>
+      <h2>餵奶登記</h2>
       <!-- C 區：前往歷史紀錄頁面 -->
-      <button class="btn btn-nav" onclick="switchPage('historyView')">歷史紀錄 ➔</button>
+      <button class="btn btn-nav" onclick="switchPage('historyView')">完整歷史 ➔</button>
     </div>
 
-    <!-- B 區：整區壓縮成單一行 (時間、準備、剩餘、記錄按鈕、補填按鈕) -->
+    <!-- B 區：滿版輸入面板 -->
     <div class="card">
-      <div class="compact-row">
-        <!-- A 區： datetime-local 搭配 step=60 隱藏秒數 -->
-        <input type="datetime-local" id="inputTime" step="60" />
-        <input type="number" id="prepAmount" placeholder="準備ml" />
-        <input type="number" id="leftAmount" placeholder="剩餘ml" />
-        <button class="btn btn-main" onclick="addFeedingRecord()">記錄</button>
+      <!-- 上排：時間、準備ml、剩餘ml 滿版均分 -->
+      <div class="form-grid">
+        <input type="datetime-local" id="inputTime" class="form-control" step="60" />
+        <input type="number" id="prepAmount" class="form-control" placeholder="準備 ml" />
+        <input type="number" id="leftAmount" class="form-control" placeholder="剩餘 ml" />
+      </div>
+      <!-- 下排：記錄與補填按鈕 滿版橫列 -->
+      <div class="btn-group-row">
+        <button class="btn btn-main" onclick="addFeedingRecord()">＋ 記錄此餐</button>
         <button class="btn btn-sub" onclick="fillPreviousLeft()">補填上一餐剩餘</button>
       </div>
     </div>
@@ -96,7 +132,7 @@
     <!-- D 區：最近 12 小時記錄 -->
     <div class="card">
       <div class="page-header">
-        <h3 style="font-size:0.95rem; color:#666;">最近 12 小時記錄</h3>
+        <h3 style="font-size:0.95rem; color:#718096;">最近 12 小時紀錄</h3>
       </div>
       <div id="recent12hList" class="record-list">
         <div class="loading-text">資料載入中...</div>
@@ -110,7 +146,7 @@
     <div class="page-header">
       <!-- C 區：返回按鈕 -->
       <button class="btn btn-nav" onclick="switchPage('mainView')">← 返回主頁</button>
-      <h2>完整歷史紀錄</h2>
+      <h2>歷史紀錄</h2>
     </div>
 
     <div class="card">
@@ -125,7 +161,7 @@
 <script>
   let globalRecords = [];
 
-  // 初始化時間 (A 區：去掉秒數，只保留 YYYY-MM-DDTHH:mm)
+  // A 區：初始化時間 (精確到分 YYYY-MM-DDTHH:mm)
   function initTimeInput() {
     const now = new Date();
     now.setSeconds(0, 0);
@@ -133,26 +169,24 @@
     document.getElementById('inputTime').value = localIso;
   }
 
-  // 格式化時間 (A 區：時間不顯示秒數)
+  // A 區：格式化時間 (不顯示秒數)
   function formatTimeNoSeconds(timeStr) {
     if (!timeStr) return '';
-    // 將 "2026-10-01 08:30:00" 轉為 "2026-10-01 08:30" 或僅顯示時間 "08:30"
     const parts = timeStr.replace('T', ' ').split(' ');
     if (parts.length >= 2) {
-      const timePart = parts[1].substring(0, 5); // 取 HH:mm
-      return `${parts[0]} ${timePart}`;
+      return `${parts[0]} ${parts[1].substring(0, 5)}`;
     }
     return timeStr.substring(0, 16);
   }
 
-  // 頁面切換 (C 區)
+  // C 區：頁面切換 (主頁 ↔ 歷史頁)
   function switchPage(pageId) {
     document.querySelectorAll('.view-page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
     if (pageId === 'historyView') renderFullHistory();
   }
 
-  // 從 Apps Script 讀取資料
+  // 從 Apps Script 取得試算表資料
   function fetchRecords() {
     if (typeof google !== 'undefined' && google.script) {
       google.script.run.withSuccessHandler(data => {
@@ -160,7 +194,7 @@
         renderRecent12h();
       }).getRecords();
     } else {
-      // 本地測試模擬資料
+      // 測試用模擬資料
       globalRecords = [
         { id: "1", time: "2026-10-01 08:30", prep: 90, left: 30, actual: 60 },
         { id: "2", time: "2026-10-01 02:15", prep: 120, left: 10, actual: 110 },
@@ -170,18 +204,17 @@
     }
   }
 
-  // 新增紀錄 (B 區連動)
+  // 新增紀錄
   function addFeedingRecord() {
     const rawTime = document.getElementById('inputTime').value;
     const prep = Number(document.getElementById('prepAmount').value) || 0;
     const left = Number(document.getElementById('leftAmount').value) || 0;
     
     if (!rawTime) return alert('請選擇時間！');
-    if (prep <= 0) return alert('請輸入準備奶量！');
+    if (prep <= 0) return alert('請填寫準備奶量！');
 
-    const formattedTime = rawTime.replace('T', ' '); // 去掉 T
+    const formattedTime = rawTime.replace('T', ' ');
     const actual = Math.max(0, prep - left);
-
     const recordData = { time: formattedTime, prep: prep, left: left, actual: actual, type: '配方奶' };
 
     if (typeof google !== 'undefined' && google.script) {
@@ -213,7 +246,7 @@
     }
   }
 
-  // D 區：刪除紀錄
+  // D 區：刪除指定紀錄
   function deleteRecord(id) {
     if (!confirm('確定要刪除這筆紀錄嗎？')) return;
 
@@ -225,7 +258,7 @@
     }
   }
 
-  // D 區：渲染最近 12 小時紀錄 (格式：準備90ml 剩餘30ml 實際60ml，並含刪除按鈕)
+  // D 區：渲染最近 12 小時紀錄 (格式：準備90ml 剩餘30ml 實際60ml，包含刪除按鈕)
   function renderRecent12h() {
     const list = document.getElementById('recent12hList');
     const now = new Date().getTime();
@@ -243,16 +276,16 @@
 
     list.innerHTML = recent.map(r => `
       <div class="record-item">
-        <div>
+        <div class="record-main-info">
           <span class="record-time">${formatTimeNoSeconds(r.time).split(' ')[1] || formatTimeNoSeconds(r.time)}</span>
-          <span class="record-detail">準備${r.prep}ml 剩餘${r.left}ml <b>實際${r.actual}ml</b></span>
+          <span class="record-detail">準備 <b>${r.prep}</b>ml | 剩餘 <b>${r.left}</b>ml | 實際 <b>${r.actual}</b>ml</span>
         </div>
         <button class="btn-del" onclick="deleteRecord('${r.id}')">刪除</button>
       </div>
     `).join('');
   }
 
-  // C 區：渲染完整歷史紀錄 (只看歷史，不重疊刪除按鈕，乾淨排版)
+  // C 區：渲染完整歷史紀錄頁面
   function renderFullHistory() {
     const list = document.getElementById('fullHistoryList');
     if (globalRecords.length === 0) {
@@ -262,15 +295,15 @@
 
     list.innerHTML = globalRecords.map(r => `
       <div class="record-item">
-        <div>
+        <div class="record-main-info">
           <span class="record-time">${formatTimeNoSeconds(r.time)}</span>
-          <span class="record-detail">準備${r.prep}ml | 剩餘${r.left}ml | <b>實際${r.actual}ml</b></span>
+          <span class="record-detail">準備 ${r.prep}ml | 剩餘 ${r.left}ml | <b>實際 ${r.actual}ml</b></span>
         </div>
       </div>
     `).join('');
   }
 
-  // 初始化
+  // 初始化執行
   initTimeInput();
   fetchRecords();
 </script>
