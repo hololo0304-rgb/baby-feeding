@@ -1,20 +1,35 @@
 console.log("Baby Feed App Start");
 
 let currentTime = new Date();
+let latestRecord = null;
 
 document.addEventListener("DOMContentLoaded", () => {
 
+    initTime();
     initTypeButtons();
     initMilkButtons();
-    initTime();
+    initRemainButtons();
 
     document
         .getElementById("add5Btn")
-        .addEventListener("click", add5Minutes);
+        .addEventListener(
+            "click",
+            add5Minutes
+        );
 
     document
         .getElementById("saveBtn")
-        .addEventListener("click", saveRecord);
+        .addEventListener(
+            "click",
+            saveRecord
+        );
+
+    document
+        .getElementById("updateRemainingBtn")
+        .addEventListener(
+            "click",
+            updateRemaining
+        );
 
     loadRecords();
 
@@ -41,7 +56,8 @@ function updateDisplayTime(){
         currentTime.toLocaleString(
             "zh-TW",
             {
-                timeZone:"Asia/Taipei"
+                timeZone:"Asia/Taipei",
+                hour12:false
             }
         );
 
@@ -50,7 +66,7 @@ function updateDisplayTime(){
 function add5Minutes(){
 
     currentTime.setMinutes(
-        currentTime.getMinutes()+5
+        currentTime.getMinutes() + 5
     );
 
     updateDisplayTime();
@@ -77,6 +93,7 @@ function initTypeButtons(){
                     .getElementById("feedType")
                     .value =
                     btn.dataset.type;
+
             });
 
         });
@@ -103,6 +120,34 @@ function initMilkButtons(){
                     .getElementById("preparedAmount")
                     .value =
                     btn.dataset.ml;
+
+            });
+
+        });
+
+}
+
+function initRemainButtons(){
+
+    document
+        .querySelectorAll(".remain-btn")
+        .forEach(btn=>{
+
+            btn.addEventListener("click",()=>{
+
+                document
+                    .querySelectorAll(".remain-btn")
+                    .forEach(x=>
+                        x.classList.remove("active")
+                    );
+
+                btn.classList.add("active");
+
+                document
+                    .getElementById("remainingAmount")
+                    .value =
+                    btn.dataset.remain;
+
             });
 
         });
@@ -113,30 +158,47 @@ async function saveRecord(){
 
     try{
 
+        const preparedAmount = Number(
+            document
+                .getElementById(
+                    "preparedAmount"
+                )
+                .value
+        );
+
+        if(!preparedAmount){
+
+            alert("請輸入奶量");
+
+            return;
+        }
+
         const payload = {
 
             feedTime:
-                document.getElementById(
+                document
+                .getElementById(
                     "feedTime"
-                ).value,
+                )
+                .value,
 
             feedType:
-                document.getElementById(
+                document
+                .getElementById(
                     "feedType"
-                ).value,
+                )
+                .value,
 
-            preparedAmount:
-                Number(
-                    document.getElementById(
-                        "preparedAmount"
-                    ).value
-                ),
+            preparedAmount,
 
             remainingAmount:0
 
         };
 
-        console.log(payload);
+        console.log(
+            "送出資料",
+            payload
+        );
 
         await fetch(
             window.CONFIG.GAS_URL,
@@ -147,14 +209,32 @@ async function saveRecord(){
                     "Content-Type":"text/plain"
                 },
 
-                body:
-                JSON.stringify(payload)
+                body:JSON.stringify(
+                    payload
+                )
             }
         );
 
         alert("✅ 已記錄");
 
-        await loadRecords();
+        document
+            .getElementById(
+                "preparedAmount"
+            )
+            .value = "";
+
+        document
+            .querySelectorAll(".milk-btn")
+            .forEach(x=>
+                x.classList.remove("active")
+            );
+
+        currentTime =
+            new Date();
+
+        updateDisplayTime();
+
+        loadRecords();
 
     }
     catch(error){
@@ -164,6 +244,86 @@ async function saveRecord(){
         alert("寫入失敗");
 
     }
+
+}
+
+async function updateRemaining(){
+
+    try{
+
+        if(!latestRecord){
+
+            alert("沒有可更新的紀錄");
+
+            return;
+        }
+
+        const remainingAmount =
+        Number(
+            document
+                .getElementById(
+                    "remainingAmount"
+                )
+                .value
+        );
+
+        if(isNaN(remainingAmount)){
+
+            alert("請輸入剩餘量");
+
+            return;
+        }
+
+        await fetch(
+
+            `${window.CONFIG.GAS_URL}?action=updateRemaining`,
+
+            {
+
+                method:"POST",
+
+                headers:{
+                    "Content-Type":"text/plain"
+                },
+
+                body:JSON.stringify({
+
+                    feedTime:
+                        latestRecord.feedTime,
+
+                    remainingAmount
+
+                })
+
+            }
+
+        );
+
+        alert("✅ 已更新");
+
+        document
+            .getElementById(
+                "remainingAmount"
+            )
+            .value = "";
+
+        document
+            .querySelectorAll(".remain-btn")
+            .forEach(x=>
+                x.classList.remove("active")
+            );
+
+        loadRecords();
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        alert("更新失敗");
+
+    }
+
 }
 
 async function loadRecords(){
@@ -171,43 +331,66 @@ async function loadRecords(){
     try{
 
         const response =
-        await fetch(
-            window.CONFIG.GAS_URL
-        );
+            await fetch(
+                window.CONFIG.GAS_URL
+            );
 
         const records =
-        await response.json();
-
-        renderRecords(records);
+            await response.json();
 
         if(records.length){
 
-            updateSummary(records[0]);
+            latestRecord =
+                records[0];
+
+            updateSummary(
+                latestRecord
+            );
+
+            updateLastFeedInfo(
+                latestRecord
+            );
+
         }
+
+        renderRecords(
+            records
+        );
 
     }
     catch(error){
 
-        console.error(error);
+        console.error(
+            "載入失敗",
+            error
+        );
     }
 
 }
 
-function updateSummary(lastRecord){
+function updateSummary(record){
 
     const feedTime =
-    new Date(lastRecord.feedTime);
+        new Date(
+            record.feedTime
+        );
 
     const diff =
-    Date.now() - feedTime.getTime();
+        Date.now()
+        -
+        feedTime.getTime();
 
     const h =
-    Math.floor(diff/1000/60/60);
+        Math.floor(
+            diff /
+            (1000 * 60 * 60)
+        );
 
     const m =
-    Math.floor(
-        (diff/1000/60)%60
-    );
+        Math.floor(
+            diff /
+            (1000 * 60)
+        ) % 60;
 
     document
         .getElementById(
@@ -217,9 +400,16 @@ function updateSummary(lastRecord){
         `${h}h ${m}m`;
 
     const drinkAmount =
-        (Number(lastRecord.preparedAmount)||0)
+
+        (Number(
+            record.preparedAmount
+        ) || 0)
+
         -
-        (Number(lastRecord.remainingAmount)||0);
+
+        (Number(
+            record.remainingAmount
+        ) || 0);
 
     document
         .getElementById(
@@ -230,53 +420,86 @@ function updateSummary(lastRecord){
 
 }
 
+function updateLastFeedInfo(record){
+
+    document
+        .getElementById(
+            "lastFeedInfo"
+        )
+        .innerHTML =
+
+        `
+        ${record.feedType}
+        ｜
+
+        準備 ${record.preparedAmount}ml
+
+        <br>
+
+        已填剩餘：
+        ${record.remainingAmount || 0}ml
+        `;
+
+}
+
 function renderRecords(records){
 
     const container =
-    document.getElementById(
-        "recordsContainer"
-    );
+        document.getElementById(
+            "recordsContainer"
+        );
 
     if(!records.length){
 
         container.innerHTML =
-        "尚無資料";
+            "尚無資料";
 
         return;
     }
 
     container.innerHTML =
-    records
-    .slice(0,10)
-    .map(r=>{
 
-        const drink =
-        (Number(r.preparedAmount)||0)
-        -
-        (Number(r.remainingAmount)||0);
+        records
+        .slice(0,10)
+        .map(r=>{
 
-        return `
+            const drinkAmount =
 
-        <div class="record">
+                (Number(
+                    r.preparedAmount
+                ) || 0)
 
-            <strong>
-            ${new Date(r.feedTime)
-            .toLocaleString("zh-TW")}
-            </strong>
+                -
 
-            <br>
+                (Number(
+                    r.remainingAmount
+                ) || 0);
 
-            ${r.feedType}
+            return `
 
-            |
+            <div class="record">
 
-            ${drink} ml
+                ${new Date(r.feedTime)
+                .toLocaleString(
+                    "zh-TW",
+                    {
+                        hour12:false
+                    }
+                )}
 
-        </div>
+                ｜
 
-        `;
+                ${r.feedType}
 
-    })
-    .join("");
+                ｜
+
+                ${drinkAmount}ml
+
+            </div>
+
+            `;
+
+        })
+        .join("");
 
 }
